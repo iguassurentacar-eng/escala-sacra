@@ -535,25 +535,29 @@
 
     <!-- MOBILE BOTTOM BAR -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-navy-900 border-t border-navy-800 flex justify-around items-center py-2 px-1 z-30 shadow-lg">
-        <button onclick="switchTab('dashboard')" id="mobile-nav-dashboard" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+        <button onclick="switchTab('dashboard')" id="mobile-nav-dashboard" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-1 rounded-lg text-[9px]">
             <i class="fa-solid fa-chart-pie text-base"></i>
             <span>Painel</span>
         </button>
-        <button onclick="switchTab('igrejas')" id="mobile-nav-igrejas" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+        <button onclick="switchTab('igrejas')" id="mobile-nav-igrejas" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-1 rounded-lg text-[9px]">
             <i class="fa-solid fa-church text-base"></i>
             <span>Igrejas</span>
         </button>
-        <button onclick="switchTab('voluntarios')" id="mobile-nav-voluntarios" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+        <button onclick="switchTab('voluntarios')" id="mobile-nav-voluntarios" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-1 rounded-lg text-[9px]">
             <i class="fa-solid fa-users text-base"></i>
             <span>Servidores</span>
         </button>
-        <button onclick="switchTab('escalas')" id="mobile-nav-escalas" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+        <button onclick="switchTab('escalas')" id="mobile-nav-escalas" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-1 rounded-lg text-[9px]">
             <i class="fa-solid fa-calendar-days text-base"></i>
             <span>Escalas</span>
         </button>
-        <button onclick="switchTab('lembretes')" id="mobile-nav-lembretes" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+        <button onclick="switchTab('lembretes')" id="mobile-nav-lembretes" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-1 rounded-lg text-[9px]">
             <i class="fa-brands fa-whatsapp text-base text-green-400"></i>
             <span>Lembretes</span>
+        </button>
+        <button onclick="switchTab('config')" id="mobile-nav-config" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-1 rounded-lg text-[9px]">
+            <i class="fa-solid fa-gear text-base"></i>
+            <span>Config</span>
         </button>
     </nav>
 
@@ -833,6 +837,62 @@
                         <i class="fa-solid fa-check"></i> Concluir e Acessar Sistema
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- ==================== MODAL DE DISPARO RÁPIDO WHATSAPP DA ESCALA ==================== -->
+    <div id="modal-whatsapp-escala" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+            <div class="bg-gradient-to-r from-emerald-700 via-emerald-800 to-navy-950 p-5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-2xl text-emerald-300 shadow-inner">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-serif font-bold text-lg text-white">Disparo WhatsApp da Escala</h3>
+                        <p id="mwa-escala-sub" class="text-xs text-slate-200">Local e Data</p>
+                    </div>
+                </div>
+                <button type="button" onclick="fecharModalWhatsAppEscala()" class="text-white/80 hover:text-white p-1 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-4">
+                <!-- Botões de Ação Rápida em Massa -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button type="button" onclick="executarDirectParaTodos()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                        <i class="fa-brands fa-whatsapp text-base"></i> Direct (wa.me) p/ Todos
+                    </button>
+                    <button type="button" onclick="executarWaAkgDestaEscala()" class="bg-navy-900 hover:bg-navy-800 text-white font-semibold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition border border-navy-700">
+                        <i class="fa-solid fa-bolt text-amber-400"></i> Em Massa (WA-AKG)
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-100 pt-3">
+                    <button type="button" onclick="copiarMensagemGeralEscala()" class="text-xs text-navy-800 bg-slate-100 hover:bg-slate-200 py-1.5 px-3 rounded-xl font-semibold flex items-center gap-1.5 transition border border-slate-200">
+                        <i class="fa-solid fa-copy"></i> Copiar Escala p/ Grupo
+                    </button>
+                    <button type="button" onclick="abrirNaCentralLembretes()" class="text-xs text-emerald-700 hover:underline font-semibold flex items-center gap-1">
+                        Personalizar na Central <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Lista de Servidores com botão individual de WhatsApp -->
+                <div class="space-y-2 pt-2">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Servidores Escalados nesta Celebração</p>
+                    <div id="mwa-servidores-lista" class="space-y-2">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 p-4 border-t flex justify-end">
+                <button type="button" onclick="fecharModalWhatsAppEscala()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-xl transition">
+                    Fechar
+                </button>
             </div>
         </div>
     </div>
@@ -1521,6 +1581,9 @@
                                 <p class="text-xs text-slate-500 font-medium"><i class="fa-regular fa-calendar text-gold-600 mr-1"></i> ${dataFormatada} às ${esc.horario}</p>
                             </div>
                             <div class="flex items-center gap-2 flex-wrap">
+                                <button type="button" onclick="enviarWhatsAppDaEscala('${esc.id}')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-semibold transition-all shadow-sm flex items-center gap-1.5" title="Enviar lembretes no WhatsApp com link de confirmação">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                                </button>
                                 <button onclick="baixarImagemMural('${esc.id}')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg font-semibold transition-all border border-emerald-200 flex items-center gap-1.5" title="Baixar imagem PNG para WhatsApp">
                                     <i class="fa-solid fa-image"></i> Imagem PNG
                                 </button>
@@ -2152,6 +2215,144 @@
                 .replace(/\n/g, '<br>');
 
             document.getElementById('whatsapp-preview-box').innerHTML = htmlText;
+        }
+
+        
+        // ==================== DISPARO RÁPIDO WHATSAPP DA ESCALA ====================
+        let currentEscalaWhatsAppId = null;
+
+        function enviarWhatsAppDaEscala(escalaId) {
+            currentEscalaWhatsAppId = escalaId;
+            const escala = appState.escalas.find(e => e.id === escalaId);
+            if (!escala) return alert('Escala não encontrada.');
+
+            const igreja = appState.igrejas.find(i => i.id === escala.igrejaId);
+            const dataFormatada = new Date(escala.data + 'T00:00:00').toLocaleDateString('pt-BR');
+
+            document.getElementById('mwa-escala-sub').innerText = `${igreja ? igreja.nome : 'Igreja'} • ${dataFormatada} às ${escala.horario}`;
+
+            const container = document.getElementById('mwa-servidores-lista');
+            let html = '';
+
+            const todosVols = [];
+            (escala.equipe || []).forEach(eq => {
+                (eq.voluntarioIds || []).forEach(vid => {
+                    const vol = appState.voluntarios.find(v => v.id === vid);
+                    if (vol) {
+                        todosVols.push({ vol, funcao: eq.funcao, status: eq.status || 'PENDENTE' });
+                    }
+                });
+            });
+
+            if (todosVols.length === 0) {
+                html = `<p class="text-xs text-slate-400 py-3 italic text-center">Nenhum voluntário escalado nesta celebração.</p>`;
+            } else {
+                html = todosVols.map(item => {
+                    const tel = item.vol.phone || '';
+                    const cleanPhone = tel.replace(/\D/g, '');
+                    const hasPhone = cleanPhone.length >= 8;
+
+                    const st = item.status;
+                    let stBadge = 'bg-amber-100 text-amber-800';
+                    if (st === 'CONFIRMADO') stBadge = 'bg-emerald-100 text-emerald-700 font-bold';
+                    if (st === 'SUBSTITUICAO') stBadge = 'bg-rose-100 text-rose-700 font-bold animate-pulse';
+
+                    return `
+                        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-2">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-bold text-navy-900 text-xs">${item.vol.nome}</span>
+                                    <span class="text-[9px] px-1.5 py-0.2 rounded ${stBadge}">${st}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500">${item.funcao} • <span class="text-slate-400 font-mono">${tel || 'Sem telefone'}</span></p>
+                            </div>
+                            <div>
+                                ${hasPhone ? `
+                                    <button type="button" onclick="dispararIndividualDirect('${escala.id}', '${item.vol.id}')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-3 rounded-xl flex items-center gap-1.5 shadow-sm transition">
+                                        <i class="fa-brands fa-whatsapp text-sm"></i> Enviar
+                                    </button>
+                                ` : `
+                                    <span class="text-[10px] text-slate-400 italic">Sem WhatsApp</span>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            container.innerHTML = html;
+            document.getElementById('modal-whatsapp-escala').classList.remove('hidden');
+        }
+
+        function fecharModalWhatsAppEscala() {
+            const modal = document.getElementById('modal-whatsapp-escala');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function dispararIndividualDirect(escalaId, volId) {
+            const escala = appState.escalas.find(e => e.id === escalaId);
+            const vol = appState.voluntarios.find(v => v.id === volId);
+            if (!escala || !vol || !vol.phone) return alert('Dados insuficientes para envio.');
+
+            const clean = vol.phone.replace(/\D/g, '');
+            const tel = clean.startsWith('55') ? clean : ('55' + clean);
+            const txt = generateLembreteText(escala, vol.id, '', 'CONVOCAÇÃO');
+            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(txt)}`, '_blank');
+        }
+
+        function executarDirectParaTodos() {
+            if (!currentEscalaWhatsAppId) return;
+            const escala = appState.escalas.find(e => e.id === currentEscalaWhatsAppId);
+            if (!escala) return;
+
+            let disparados = 0;
+            (escala.equipe || []).forEach(eq => {
+                (eq.voluntarioIds || []).forEach(vid => {
+                    const vol = appState.voluntarios.find(v => v.id === vid);
+                    if (vol && vol.phone) {
+                        const clean = vol.phone.replace(/\D/g, '');
+                        const tel = clean.startsWith('55') ? clean : ('55' + clean);
+                        const txt = generateLembreteText(escala, vol.id, '', 'CONVOCAÇÃO');
+                        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(txt)}`, '_blank');
+                        disparados++;
+                    }
+                });
+            });
+
+            if (disparados === 0) alert('Nenhum servidor desta celebração possui telefone cadastrado.');
+            else showToast(`Abrindo conversas de ${disparados} servidores no WhatsApp...`);
+        }
+
+        async function executarWaAkgDestaEscala() {
+            if (!currentEscalaWhatsAppId) return;
+            const selEsc = document.getElementById('lembrete-escala-select');
+            const selVol = document.getElementById('lembrete-voluntario-select');
+            if (selEsc) selEsc.value = currentEscalaWhatsAppId;
+            if (selVol) selVol.value = 'ALL';
+            await dispararWaAkgEmMassa();
+        }
+
+        function copiarMensagemGeralEscala() {
+            if (!currentEscalaWhatsAppId) return;
+            const escala = appState.escalas.find(e => e.id === currentEscalaWhatsAppId);
+            if (!escala) return;
+            const txt = generateLembreteText(escala, 'ALL', '', 'CONVOCAÇÃO');
+            navigator.clipboard.writeText(txt).then(() => {
+                showToast('✓ Texto da escala copiado para colar no grupo do WhatsApp!', 'success');
+            }).catch(() => {
+                alert('Não foi possível copiar automaticamente. Selecione o texto e copie manualmente.');
+            });
+        }
+
+        function abrirNaCentralLembretes() {
+            if (!currentEscalaWhatsAppId) return;
+            const sel = document.getElementById('lembrete-escala-select');
+            if (sel) {
+                sel.value = currentEscalaWhatsAppId;
+                updateLembretePreview();
+            }
+            fecharModalWhatsAppEscala();
+            switchTab('lembretes');
         }
 
         function dispararWhatsAppWeb() {
