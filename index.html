@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SacraEscala - Gestão Litúrgica & Escalas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter & Cinzel) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SheetJS CDN (XLSX/CSV) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsPDF & html2canvas CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            600: '#103058',
+                            800: '#0b1d3a',
+                            900: '#061024',
+                        },
+                        gold: {
+                            400: '#f3ca64',
+                            500: '#d4af37',
+                            600: '#aa8c2c',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Cinzel', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-escala-area, #printable-escala-area * { visibility: visible; }
+            #printable-escala-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col md:flex-row antialiased">
+
+    <!-- SIDEBAR DESKTOP -->
+    <aside class="hidden md:flex md:w-64 bg-navy-900 text-white flex-col flex-shrink-0 shadow-xl z-20">
+        <div class="p-6 border-b border-navy-800 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gold-500 flex items-center justify-center text-navy-900 font-bold text-xl shadow-md">
+                <i class="fa-solid font-serif">✝</i>
+            </div>
+            <div>
+                <h1 class="font-serif font-bold text-lg tracking-wide text-gold-400">SacraEscala</h1>
+                <p class="text-xs text-slate-400">Gestão Paroquial PWA</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-navy-800 text-slate-300">
+                <i class="fa-solid fa-chart-pie text-lg w-6"></i> Dashboard
+            </button>
+            <button onclick="switchTab('igrejas')" id="nav-igrejas" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-navy-800 text-slate-300">
+                <i class="fa-solid fa-church text-lg w-6"></i> Igrejas & Horários
+            </button>
+            <button onclick="switchTab('voluntarios')" id="nav-voluntarios" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-navy-800 text-slate-300">
+                <i class="fa-solid fa-users text-lg w-6"></i> Servidores & Férias
+            </button>
+            <button onclick="switchTab('escalas')" id="nav-escalas" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-navy-800 text-slate-300">
+                <i class="fa-solid fa-calendar-days text-lg w-6"></i> Escala de Missas
+            </button>
+            <button onclick="switchTab('lembretes')" id="nav-lembretes" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-navy-800 text-slate-300">
+                <i class="fa-brands fa-whatsapp text-lg w-6 text-green-400"></i> Disparos WhatsApp
+            </button>
+            <button onclick="switchTab('importador')" id="nav-importador" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-navy-800 text-slate-300">
+                <i class="fa-solid fa-file-excel text-lg w-6 text-emerald-400"></i> Importar Planilhas
+            </button>
+            <button onclick="switchTab('config')" id="nav-config" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-navy-800 text-slate-300">
+                <i class="fa-solid fa-gears text-lg w-6"></i> Configurações & Backup
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-navy-800 space-y-3">
+            <div id="sidebar-auth-section" class="text-xs">
+                <!-- Preenchido dinamicamente via JS -->
+            </div>
+            <div class="text-[10px] text-center text-slate-500">
+                SacraEscala v2.0 Pro &copy; 2026
+            </div>
+        </div>
+    </aside>
+
+    <!-- MOBILE TOP BAR -->
+    <header class="md:hidden bg-navy-900 text-white p-4 flex items-center justify-between shadow-md sticky top-0 z-30">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gold-500 flex items-center justify-center text-navy-900 font-bold text-base">
+                ✝
+            </div>
+            <h1 class="font-serif font-bold text-base text-gold-400">SacraEscala</h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <div id="mobile-auth-section"></div>
+            <span id="mobile-page-title" class="text-xs bg-navy-800 px-3 py-1 rounded-full text-slate-300 font-medium">Dashboard</span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8 custom-scrollbar max-w-7xl mx-auto w-full space-y-6">
+        
+        <!-- ALERT/NOTIFICATION CONTAINER -->
+        <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+        <!-- BARRA DE FILTRO POR PARÓQUIA GLOBAL -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="w-9 h-9 rounded-xl bg-navy-50 text-navy-600 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-filter"></i>
+                </div>
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Filtrar Visão Por Paróquia:</p>
+                    <select id="global-paroquia-filter" onchange="onGlobalFilterChange()" class="font-bold text-navy-900 bg-transparent text-sm focus:outline-none">
+                        <option value="">Todas as Paróquias / Capelas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Botões Rápidos de Ação -->
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+                <div id="topbar-cloud-status" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-600">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Supabase Nuvem</span>
+                </div>
+                <div id="topbar-auth-btn">
+                    <!-- Preenchido via JS -->
+                </div>
+                <button onclick="switchTab('importador')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-3 py-2 rounded-xl border border-emerald-200 flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-file-excel"></i> Planilha
+                </button>
+                <button onclick="openEscalaModal()" class="text-xs bg-navy-600 hover:bg-navy-800 text-white font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all">
+                    <i class="fa-solid fa-plus"></i> Nova Escala
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== DASHBOARD TAB ==================== -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+            <!-- Header Alertas Incompletude -->
+            <div id="alertas-incompletude-banner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-rose-200 flex items-center justify-center text-rose-700 flex-shrink-0 text-lg">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm">Atenção: Missas com Escala Incompleta</h4>
+                        <p id="alertas-incompletude-text" class="text-xs text-rose-600">Existem missas que necessitam de mais voluntários escalados.</p>
+                    </div>
+                </div>
+                <button onclick="switchTab('escalas')" class="text-xs bg-rose-600 text-white font-semibold px-4 py-2 rounded-xl hover:bg-rose-700 transition-all self-end sm:self-center">
+                    Resolver Agora
+                </button>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-navy-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-church"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Igrejas</p>
+                        <h3 id="stat-igrejas" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-gold-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Voluntários</p>
+                        <h3 id="stat-voluntarios" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Escalas</p>
+                        <h3 id="stat-escalas" class="text-2xl font-bold text-slate-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-user-clock"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pendentes</p>
+                        <h3 id="stat-pendentes" class="text-2xl font-bold text-rose-600">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Próximas Missas & Breakdown de Servidores -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Próximas Escalas -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-serif font-bold text-lg text-navy-900">Próximas Celebrações</h3>
+                        <button onclick="switchTab('escalas')" class="text-xs font-semibold text-navy-600 hover:text-navy-800">Ver todas →</button>
+                    </div>
+                    <div id="dash-proximas-escalas" class="space-y-3">
+                        <!-- Renderizado via JS -->
+                    </div>
+                </div>
+
+                <!-- Servidores por Função -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                    <h3 class="font-serif font-bold text-lg text-navy-900 mb-4">Voluntários por Função</h3>
+                    <div id="dash-funcoes-breakdown" class="space-y-3 text-sm">
+                        <!-- Renderizado via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== IGREJAS & HORÁRIOS TAB ==================== -->
+        <section id="tab-igrejas" class="tab-content space-y-6 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                <div>
+                    <h2 class="text-2xl font-bold text-navy-900 font-serif">Igrejas & Capelas</h2>
+                    <p class="text-slate-500 text-sm">Gerencie os locais de missa e seus horários regulares</p>
+                </div>
+                <button onclick="openIgrejaModal()" class="bg-navy-600 hover:bg-navy-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-all">
+                    <i class="fa-solid fa-plus"></i> Cadastrar Igreja
+                </button>
+            </div>
+
+            <div id="igrejas-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards via JS -->
+            </div>
+        </section>
+
+        <!-- ==================== SERVIDORES & INDISPONIBILIDADE TAB ==================== -->
+        <section id="tab-voluntarios" class="tab-content space-y-6 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                <div>
+                    <h2 class="text-2xl font-bold text-navy-900 font-serif">Servidores & Voluntários</h2>
+                    <p class="text-slate-500 text-sm">Cadastro de voluntários, funções exercidas e períodos de férias/indisponibilidade</p>
+                </div>
+                <button onclick="openVoluntarioModal()" class="bg-navy-600 hover:bg-navy-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-all">
+                    <i class="fa-solid fa-user-plus"></i> Novo Servidor
+                </button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row gap-4">
+                <div class="flex-1 relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                    <input type="text" id="filter-voluntario-search" oninput="renderVoluntarios()" placeholder="Buscar por nome ou WhatsApp..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy-600">
+                </div>
+                <div class="w-full md:w-56">
+                    <select id="filter-voluntario-funcao" onchange="renderVoluntarios()" class="w-full py-2 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy-600">
+                        <option value="">Todas as Funções</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tabela de Servidores -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] tracking-wider">
+                                <th class="py-3.5 px-4 font-bold">Nome</th>
+                                <th class="py-3.5 px-4 font-bold">WhatsApp</th>
+                                <th class="py-3.5 px-4 font-bold">Igreja Principal</th>
+                                <th class="py-3.5 px-4 font-bold">Funções Aptas</th>
+                                <th class="py-3.5 px-4 font-bold">Indisponibilidade / Férias</th>
+                                <th class="py-3.5 px-4 font-bold text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="voluntarios-table-body" class="divide-y divide-slate-100">
+                            <!-- Renderizado via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ESCALA DE MISSAS TAB ==================== -->
+        <section id="tab-escalas" class="tab-content space-y-6 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                <div>
+                    <h2 class="text-2xl font-bold text-navy-900 font-serif">Gerenciador de Escalas</h2>
+                    <p class="text-slate-500 text-sm">Monte a equipe por celebração, exporte PDF ou imprima para a sacristia</p>
+                </div>
+                <button onclick="openEscalaModal()" class="bg-navy-600 hover:bg-navy-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-all">
+                    <i class="fa-solid fa-calendar-plus"></i> Montar Nova Escala
+                </button>
+            </div>
+
+            <!-- Lista de Escalas Montadas -->
+            <div id="escalas-list" class="space-y-4">
+                <!-- Renderizado via JS -->
+            </div>
+        </section>
+
+        <!-- ==================== DISPAROS WHATSAPP TAB ==================== -->
+        <section id="tab-lembretes" class="tab-content space-y-6 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                <div>
+                    <h2 class="text-2xl font-bold text-navy-900 font-serif">Central de Lembretes & Convocações</h2>
+                    <p class="text-slate-500 text-sm">Dispare convocações individuais, em grupo ou solicite substituições via WhatsApp</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Seleção e Configuração -->
+                <div class="lg:col-span-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+                    <h3 class="font-bold text-slate-800 text-base border-b border-slate-100 pb-2">1. Selecionar Missa Escalada</h3>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Celebração:</label>
+                        <select id="lembrete-escala-select" onchange="updateLembretePreview()" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                            <!-- Opções via JS -->
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatário:</label>
+                        <select id="lembrete-voluntario-select" onchange="updateLembretePreview()" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                            <!-- Opções via JS -->
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Mensagem:</label>
+                        <select id="lembrete-tipo-msg" onchange="updateLembretePreview()" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                            <option value="CONVOCAÇÃO">Lembrete & Convocação Padrão</option>
+                            <option value="SUBSTITUICAO">Pedido de Substituição / Troca de Turno</option>
+                        </select>
+                    </div>
+
+                    <h3 class="font-bold text-slate-800 text-base border-b border-slate-100 pb-2 pt-2">2. Observação Adicional do Admin</h3>
+                    <div>
+                        <textarea id="lembrete-obs-extra" oninput="updateLembretePreview()" rows="3" placeholder="Ex: Por favor, chegar com 20 minutos de antecedência. Usar veste branca." class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600"></textarea>
+                    </div>
+
+                    <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                        <button onclick="dispararWhatsAppWeb()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all">
+                            <i class="fa-brands fa-whatsapp text-lg"></i> Disparar Direct (wa.me)
+                        </button>
+                        <button onclick="simularEnvioWebhook()" class="bg-navy-800 hover:bg-navy-900 text-white font-semibold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all">
+                            <i class="fa-solid fa-robot"></i> Disparo via API
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview em Tempo Real -->
+                <div class="lg:col-span-6 bg-slate-200 p-6 rounded-2xl shadow-inner flex flex-col items-center justify-center">
+                    <p class="text-xs text-slate-500 mb-2 font-semibold uppercase tracking-wider">Preview da Mensagem (WhatsApp)</p>
+                    <div class="w-full max-w-sm bg-[#efeae2] rounded-2xl shadow-md p-4 border border-slate-300 relative font-sans text-xs text-slate-800 space-y-2">
+                        <div class="bg-white p-3.5 rounded-xl rounded-tl-none shadow-sm space-y-2 leading-relaxed border border-slate-100" id="whatsapp-preview-box">
+                            <!-- Conteúdo via JS -->
+                        </div>
+                        <div class="text-[10px] text-slate-400 text-right">Preview de envio em tempo real</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== IMPORTADOR DE PLANILHAS CSV / XLSX ==================== -->
+        <section id="tab-importador" class="tab-content space-y-6 hidden">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-2">
+                <h2 class="text-2xl font-bold text-navy-900 font-serif">Importação de Planilhas (CSV / XLSX)</h2>
+                <p class="text-slate-500 text-sm">Carregue suas planilhas de voluntários e igrejas diretamente para alimentar o sistema</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Dropzone de Arquivo -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col items-center justify-center text-center space-y-4">
+                    <div class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl border border-emerald-100">
+                        <i class="fa-solid fa-file-excel"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base">Carregar Planilha</h3>
+                        <p class="text-xs text-slate-500 mt-1">Suporta arquivos formato .xlsx, .xls ou .csv</p>
+                    </div>
+
+                    <label class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-xl text-sm cursor-pointer shadow-sm transition-all inline-flex items-center gap-2">
+                        <i class="fa-solid fa-upload"></i> Selecionar Arquivo
+                        <input type="file" id="spreadsheet-file-input" accept=".xlsx, .xls, .csv" onchange="handleSpreadsheetUpload(event)" class="hidden">
+                    </label>
+
+                    <button onclick="downloadCSVTemplate()" class="text-xs text-navy-600 hover:underline flex items-center gap-1">
+                        <i class="fa-solid fa-download"></i> Baixar Planilha Exemplo (CSV)
+                    </button>
+                </div>
+
+                <!-- Preview de Mapeamento de Colunas -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+                    <h3 class="font-bold text-slate-800 text-base border-b pb-2">Mapeamento de Dados Processados</h3>
+                    <div id="import-preview-container" class="text-xs text-slate-500 space-y-3">
+                        <p class="italic">Nenhum arquivo carregado no momento.</p>
+                    </div>
+                    <button id="btn-confirm-import" onclick="confirmImportData()" disabled class="w-full bg-navy-600 hover:bg-navy-800 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm transition-all">
+                        Confirmar e Importar para o Sistema
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== CONFIGURAÇÕES & BACKUP TAB ==================== -->
+        <section id="tab-config" class="tab-content space-y-6 hidden">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                <h2 class="text-2xl font-bold text-navy-900 font-serif mb-1">Configurações & Backup</h2>
+                <p class="text-slate-500 text-sm">Gerencie dados, integrações e faça backups do sistema</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Automação API -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+                    <h3 class="font-serif font-bold text-lg text-navy-900 flex items-center gap-2">
+                        <i class="fa-solid fa-plug text-navy-600"></i> Automação WhatsApp API
+                    </h3>
+                    <p class="text-xs text-slate-500">Configure sua URL Webhook para disparos automáticos via Z-API, Evolution API ou Twilio.</p>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">URL Endpoint do Webhook:</label>
+                        <input type="url" id="cfg-webhook-url" placeholder="https://api.z-api.io/instances/..." class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Token de Autenticação (Bearer):</label>
+                        <input type="password" id="cfg-webhook-token" placeholder="••••••••••••••••••••" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                    </div>
+                    <button onclick="saveApiSettings()" class="bg-navy-600 hover:bg-navy-800 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-all">
+                        Salvar Configurações API
+                    </button>
+                </div>
+
+                <!-- Backup JSON -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+                    <h3 class="font-serif font-bold text-lg text-navy-900 flex items-center gap-2">
+                        <i class="fa-solid fa-database text-navy-600"></i> Exportar & Importar Backup
+                    </h3>
+                    <p class="text-xs text-slate-500">Faça download do arquivo JSON completo ou restaure seu backup.</p>
+                    
+                    <div class="flex flex-col gap-3">
+                        <button onclick="exportBackupData()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-all">
+                            <i class="fa-solid fa-download"></i> Exportar Backup (JSON)
+                        </button>
+                        
+                        <label class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 cursor-pointer transition-all border border-slate-200">
+                            <i class="fa-solid fa-upload"></i> Restaurar Backup JSON
+                            <input type="file" id="import-file" accept=".json" onchange="importBackupData(event)" class="hidden">
+                        </label>
+
+                        <button onclick="resetSystemData()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-all border border-rose-200 mt-2">
+                            <i class="fa-solid fa-trash-can"></i> Resetar Dados Iniciais
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- AREA OCULTA PARA IMPRESSÃO/PDF DA ESCALA -->
+    <div id="printable-escala-area" class="hidden p-8 bg-white font-sans">
+        <!-- Renderizado dinamicamente via JS antes de gerar o PDF -->
+    </div>
+
+    <!-- MOBILE BOTTOM BAR -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-navy-900 border-t border-navy-800 flex justify-around items-center py-2 px-1 z-30 shadow-lg">
+        <button onclick="switchTab('dashboard')" id="mobile-nav-dashboard" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+            <i class="fa-solid fa-chart-pie text-base"></i>
+            <span>Painel</span>
+        </button>
+        <button onclick="switchTab('igrejas')" id="mobile-nav-igrejas" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+            <i class="fa-solid fa-church text-base"></i>
+            <span>Igrejas</span>
+        </button>
+        <button onclick="switchTab('voluntarios')" id="mobile-nav-voluntarios" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+            <i class="fa-solid fa-users text-base"></i>
+            <span>Servidores</span>
+        </button>
+        <button onclick="switchTab('escalas')" id="mobile-nav-escalas" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+            <i class="fa-solid fa-calendar-days text-base"></i>
+            <span>Escalas</span>
+        </button>
+        <button onclick="switchTab('lembretes')" id="mobile-nav-lembretes" class="mobile-nav-btn flex flex-col items-center gap-1 text-slate-400 py-1 px-2 rounded-lg text-[10px]">
+            <i class="fa-brands fa-whatsapp text-base text-green-400"></i>
+            <span>Lembretes</span>
+        </button>
+    </nav>
+
+    <!-- ==================== MODAIS ==================== -->
+
+    <!-- Modal Login Coordenador (Supabase Auth) -->
+    <div id="modal-login" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-gold-500 font-bold text-lg font-serif">✝</span>
+                    <h3 class="font-serif font-bold text-lg text-navy-900">Acesso Coordenador</h3>
+                </div>
+                <button onclick="closeLoginModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-login" onsubmit="handleCoordinatorLogin(event)" class="space-y-4">
+                <p class="text-xs text-slate-500">Faça login com seu e-mail do Supabase para sincronizar e gerenciar as escalas na nuvem.</p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">E-mail</label>
+                    <input type="email" id="login-email" required value="iguassurentacar@gmail.com" placeholder="seu-email@exemplo.com" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Senha</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                </div>
+                <div id="login-error" class="hidden text-xs text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200"></div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeLoginModal()" class="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" id="btn-login-submit" class="px-5 py-2 rounded-xl bg-navy-600 hover:bg-navy-800 text-white text-sm font-semibold shadow-sm transition-all flex items-center gap-2">
+                        <span>Entrar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Igreja -->
+    <div id="modal-igreja" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 id="modal-igreja-title" class="font-serif font-bold text-lg text-navy-900">Nova Igreja</h3>
+                <button onclick="closeIgrejaModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-igreja" onsubmit="saveIgreja(event)" class="space-y-4">
+                <input type="hidden" id="igreja-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nome da Igreja / Capela *</label>
+                    <input type="text" id="igreja-nome" required placeholder="Ex: Paróquia Matriz de São José" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Endereço / Bairro</label>
+                    <input type="text" id="igreja-endereco" placeholder="Ex: R. das Flores, 100 - Centro" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Horários Fixos de Missa (separados por vírgula)</label>
+                    <input type="text" id="igreja-horarios" placeholder="Ex: Dom 08:00, Dom 19:00, Sáb 18:00" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeIgrejaModal()" class="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-navy-600 hover:bg-navy-800 text-white text-sm font-semibold shadow-sm">Salvar Igreja</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Voluntário & Indisponibilidade -->
+    <div id="modal-voluntario" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 id="modal-voluntario-title" class="font-serif font-bold text-lg text-navy-900">Novo Servidor</h3>
+                <button onclick="closeVoluntarioModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-voluntario" onsubmit="saveVoluntario(event)" class="space-y-4">
+                <input type="hidden" id="voluntario-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nome Completo *</label>
+                    <input type="text" id="voluntario-nome" required placeholder="Ex: Gabriel Santos" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">WhatsApp (DDD + Número) *</label>
+                    <input type="tel" id="voluntario-phone" required placeholder="Ex: 11999998888" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Igreja Principal *</label>
+                    <select id="voluntario-igreja" required class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                        <!-- Opções via JS -->
+                    </select>
+                </div>
+
+                <!-- Periodo de Férias/Indisponibilidade -->
+                <div class="border-t pt-3 space-y-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Período de Indisponibilidade / Férias:</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-[10px] text-slate-500">De:</span>
+                            <input type="date" id="voluntario-indisponivel-inicio" class="w-full p-2 border border-slate-200 rounded-lg text-xs">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-500">Até:</span>
+                            <input type="date" id="voluntario-indisponivel-fim" class="w-full p-2 border border-slate-200 rounded-lg text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">Funções Exercidas (Selecione todas):</label>
+                    <div id="funcoes-checkboxes" class="grid grid-cols-2 gap-2 text-xs">
+                        <!-- Checkboxes dinamicos -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button type="button" onclick="closeVoluntarioModal()" class="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-navy-600 hover:bg-navy-800 text-white text-sm font-semibold shadow-sm">Salvar Servidor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Escala Múltiplos Servidores por Função -->
+    <div id="modal-escala" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-3xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 id="modal-escala-title" class="font-serif font-bold text-lg text-navy-900">Montar Escala de Celebração</h3>
+                <button onclick="closeEscalaModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-escala" onsubmit="saveEscala(event)" class="space-y-4">
+                <input type="hidden" id="escala-id">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Igreja *</label>
+                        <select id="escala-igreja" onchange="renderEscalaFuncoesFields()" required class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                            <!-- Opções via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data da Missa *</label>
+                        <input type="date" id="escala-data" onchange="renderEscalaFuncoesFields()" required class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Horário *</label>
+                        <input type="text" id="escala-horario" required placeholder="Ex: 19:00" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                    </div>
+                </div>
+
+                <div class="border-t pt-3">
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-slate-500 mb-2">Atribuição de Múltiplos Servidores por Função</h4>
+                    <p class="text-[11px] text-slate-400 mb-3">Marque um ou mais voluntários para cada função litúrgica da celebração.</p>
+                    
+                    <div id="escala-funcoes-assignment" class="space-y-4">
+                        <!-- Grade dinâmica de checkboxes/chips por função -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeEscalaModal()" class="px-4 py-2 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-navy-600 hover:bg-navy-800 text-white text-sm font-semibold shadow-sm">Salvar Escala</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // LISTA COMPLETA DE FUNÇÕES LITÚRGICAS
+        const FUNCOES_LITURGICAS = [
+            "Coroinha",
+            "Ajudante / Cerimonialista",
+            "Servidor do Altar",
+            "Ministro Extraordinário da Eucaristia",
+            "Primeira Leitura",
+            "Segunda Leitura",
+            "Salmista",
+            "Acolhida",
+            "Projeção / Som"
+        ];
+
+        // DADOS DEMONSTRATIVOS INICIAIS
+        const INITIAL_DATA = {
+            igrejas: [
+                { id: "ig1", nome: "Paróquia Matriz São José", endereco: "Praça da Matriz, 100 - Centro", horarios: ["Dom 08:00", "Dom 19:00", "Sáb 18:00"] },
+                { id: "ig2", nome: "Capela Nossa Senhora Aparecida", endereco: "Rua do Rosário, 450 - Bairro Alto", horarios: ["Dom 10:00", "Qua 19:30"] }
+            ],
+            voluntarios: [
+                { id: "v1", nome: "João Pedro Silva", phone: "5511988887777", igrejaId: "ig1", funcoes: ["Coroinha", "Servidor do Altar"], indisponivelInicio: "", indisponivelFim: "" },
+                { id: "v2", nome: "Maria Clara Souza", phone: "5511977776666", igrejaId: "ig1", funcoes: ["Primeira Leitura", "Segunda Leitura", "Salmista"], indisponivelInicio: "", indisponivelFim: "" },
+                { id: "v3", nome: "Carlos Eduardo Santos", phone: "5511966665555", igrejaId: "ig1", funcoes: ["Ministro Extraordinário da Eucaristia"], indisponivelInicio: "", indisponivelFim: "" },
+                { id: "v4", nome: "Ana Beatris Lima", phone: "5511955554444", igrejaId: "ig2", funcoes: ["Acolhida", "Primeira Leitura"], indisponivelInicio: "2026-11-01", indisponivelFim: "2026-11-15" },
+                { id: "v5", nome: "Lucas Mendes", phone: "5511944443333", igrejaId: "ig1", funcoes: ["Coroinha", "Ajudante / Cerimonialista"], indisponivelInicio: "", indisponivelFim: "" }
+            ],
+            escalas: [
+                {
+                    id: "esc1",
+                    igrejaId: "ig1",
+                    data: "2026-11-01",
+                    horario: "19:00",
+                    equipe: [
+                        { funcao: "Coroinha", voluntarioIds: ["v1", "v5"], status: "CONFIRMADO" },
+                        { funcao: "Primeira Leitura", voluntarioIds: ["v2"], status: "CONFIRMADO" },
+                        { funcao: "Ministro Extraordinário da Eucaristia", voluntarioIds: ["v3"], status: "PENDENTE" }
+                    ]
+                }
+            ],
+            config: {
+                webhookUrl: "",
+                webhookToken: ""
+            }
+        };
+
+        // CONFIGURAÇÃO SUPABASE
+        const SUPABASE_URL = "https://blqjirmozuwxdxlyggof.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJscWppcm1venV3eGR4bHlnZ29mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDUxMDMsImV4cCI6MjEwOTAyMTEwM30.qBxfu5zqW_cVCARwh33gmlRHm8Tj5spSuqO1jiuHMHs";
+        const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        let currentCoordinator = null;
+
+        // ESTADO GLOBAL
+        let appState = { igrejas: [], voluntarios: [], escalas: [], config: {} };
+        let globalParoquiaFilter = "";
+        let parsedImportData = null;
+
+        // INICIALIZAÇÃO
+        window.addEventListener('DOMContentLoaded', async () => {
+            loadState();
+            renderAll();
+            switchTab('dashboard');
+            await initSupabaseAuth();
+            await syncFromSupabase();
+        });
+
+        async function initSupabaseAuth() {
+            if (!sb) return;
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                currentCoordinator = session ? session.user : null;
+                renderAuthUI();
+
+                sb.auth.onAuthStateChange((_event, session) => {
+                    currentCoordinator = session ? session.user : null;
+                    renderAuthUI();
+                    if (currentCoordinator) syncFromSupabase();
+                });
+            } catch (e) {
+                console.warn('Supabase auth init:', e);
+            }
+        }
+
+        function renderAuthUI() {
+            const topBtn = document.getElementById('topbar-auth-btn');
+            const sidebarSec = document.getElementById('sidebar-auth-section');
+            const mobileSec = document.getElementById('mobile-auth-section');
+
+            if (currentCoordinator) {
+                const shortEmail = currentCoordinator.email.split('@')[0];
+                const html = `
+                    <div class="flex items-center gap-2 bg-navy-800 text-white px-3 py-1.5 rounded-xl border border-navy-700">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span class="font-medium truncate max-w-[130px]" title="${currentCoordinator.email}">${shortEmail}</span>
+                        <button onclick="handleCoordinatorLogout()" class="text-xs text-rose-400 hover:text-rose-300 ml-1" title="Sair"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+                    </div>
+                `;
+                if (topBtn) topBtn.innerHTML = html;
+                if (mobileSec) mobileSec.innerHTML = `<button onclick="handleCoordinatorLogout()" class="text-xs text-rose-400 p-1" title="Sair"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>`;
+                if (sidebarSec) sidebarSec.innerHTML = `
+                    <div class="bg-navy-800/80 p-3 rounded-xl border border-navy-700 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Coordenador</span>
+                            <span class="text-[10px] text-emerald-400 font-bold">● Ativo</span>
+                        </div>
+                        <p class="font-semibold text-white truncate text-xs" title="${currentCoordinator.email}">${currentCoordinator.email}</p>
+                        <button onclick="handleCoordinatorLogout()" class="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 pt-1">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Desconectar
+                        </button>
+                    </div>
+                `;
+            } else {
+                const btnHtml = `
+                    <button onclick="openLoginModal()" class="text-xs bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all">
+                        <i class="fa-solid fa-key"></i> Login Admin
+                    </button>
+                `;
+                if (topBtn) topBtn.innerHTML = btnHtml;
+                if (mobileSec) mobileSec.innerHTML = `<button onclick="openLoginModal()" class="text-xs text-gold-400 p-1"><i class="fa-solid fa-key"></i></button>`;
+                if (sidebarSec) sidebarSec.innerHTML = `
+                    <button onclick="openLoginModal()" class="w-full bg-gold-500 hover:bg-gold-600 text-navy-900 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all">
+                        <i class="fa-solid fa-key"></i> Entrar como Coordenador
+                    </button>
+                `;
+            }
+        }
+
+        function openLoginModal() {
+            const errBox = document.getElementById('login-error');
+            if (errBox) errBox.classList.add('hidden');
+            document.getElementById('modal-login').classList.remove('hidden');
+        }
+        function closeLoginModal() {
+            document.getElementById('modal-login').classList.add('hidden');
+        }
+
+        async function handleCoordinatorLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errBox = document.getElementById('login-error');
+            const submitBtn = document.getElementById('btn-login-submit');
+
+            errBox.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Entrando...`;
+
+            try {
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                currentCoordinator = data.user;
+                renderAuthUI();
+                closeLoginModal();
+                showToast('Login realizado com sucesso! Sincronizando dados com Supabase...');
+                await syncFromSupabase();
+            } catch (err) {
+                errBox.innerText = 'Falha no login: ' + (err.message || 'Verifique as credenciais');
+                errBox.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>Entrar</span>`;
+            }
+        }
+
+        async function handleCoordinatorLogout() {
+            if (confirm('Deseja sair da conta de Coordenador?')) {
+                await sb.auth.signOut();
+                currentCoordinator = null;
+                renderAuthUI();
+                showToast('Desconectado.');
+            }
+        }
+
+        async function syncFromSupabase() {
+            if (!sb) return;
+            try {
+                const { data: igrejasData } = await sb.from('igrejas').select('*');
+                const { data: horariosData } = await sb.from('igreja_horarios').select('*');
+                const { data: volData } = await sb.from('voluntarios').select('*');
+                const { data: volFuncData } = await sb.from('voluntario_funcoes').select('*');
+                const { data: escData } = await sb.from('escalas').select('*');
+                const { data: escFuncData } = await sb.from('escala_funcoes').select('*');
+                const { data: escConfData } = await sb.from('escala_confirmacoes').select('*');
+
+                if (igrejasData && igrejasData.length > 0) {
+                    appState.igrejas = igrejasData.map(ig => {
+                        const hrs = (horariosData || [])
+                            .filter(h => h.igreja_id === ig.id)
+                            .sort((a,b) => (a.ordem || 0) - (b.ordem || 0))
+                            .map(h => h.horario);
+                        return {
+                            id: ig.id,
+                            nome: ig.nome,
+                            endereco: ig.endereco || '',
+                            horarios: hrs
+                        };
+                    });
+                }
+
+                if (volData && volData.length > 0) {
+                    appState.voluntarios = volData.map(v => {
+                        const funcs = (volFuncData || [])
+                            .filter(f => f.voluntario_id === v.id)
+                            .map(f => f.funcao);
+                        return {
+                            id: v.id,
+                            nome: v.nome,
+                            phone: v.phone || '',
+                            igrejaId: v.igreja_id || '',
+                            indisponivelInicio: v.indisponivel_inicio || '',
+                            indisponivelFim: v.indisponivel_fim || '',
+                            funcoes: funcs
+                        };
+                    });
+                }
+
+                if (escData && escData.length > 0) {
+                    appState.escalas = escData.map(e => {
+                        const funcsDaEscala = (escFuncData || []).filter(ef => ef.escala_id === e.id);
+                        const mapFunc = {};
+                        funcsDaEscala.forEach(f => {
+                            if (!mapFunc[f.funcao]) mapFunc[f.funcao] = [];
+                            mapFunc[f.funcao].push(f.voluntario_id);
+                        });
+
+                        const equipe = Object.keys(mapFunc).map(funcao => {
+                            const conf = (escConfData || []).find(c => c.escala_id === e.id && mapFunc[funcao].includes(c.voluntario_id));
+                            return {
+                                funcao,
+                                voluntarioIds: mapFunc[funcao],
+                                status: conf ? conf.status : "CONFIRMADO"
+                            };
+                        });
+
+                        return {
+                            id: e.id,
+                            igrejaId: e.igreja_id,
+                            data: e.data,
+                            horario: e.horario,
+                            equipe
+                        };
+                    });
+                }
+
+                localStorage.setItem('sacra_escala_v2_data', JSON.stringify(appState));
+                renderAll();
+                const statusBadge = document.getElementById('topbar-cloud-status');
+                if (statusBadge) {
+                    statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Supabase Nuvem</span>`;
+                }
+            } catch (err) {
+                console.warn('Erro ao sincronizar do Supabase, usando cache local:', err);
+            }
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('sacra_escala_v2_data');
+            if (saved) {
+                try {
+                    appState = JSON.parse(saved);
+                } catch (e) {
+                    appState = JSON.parse(JSON.stringify(INITIAL_DATA));
+                }
+            } else {
+                appState = JSON.parse(JSON.stringify(INITIAL_DATA));
+                saveState();
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('sacra_escala_v2_data', JSON.stringify(appState));
+            renderAll();
+        }
+
+        function onGlobalFilterChange() {
+            globalParoquiaFilter = document.getElementById('global-paroquia-filter').value;
+            renderAll();
+        }
+
+        // TAB NAVIGATION
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if (targetTab) targetTab.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-navy-800', 'text-white', 'border-r-4', 'border-gold-500');
+                btn.classList.add('text-slate-300');
+            });
+            const activeDesktopNav = document.getElementById(`nav-${tabId}`);
+            if (activeDesktopNav) activeDesktopNav.classList.add('bg-navy-800', 'text-white', 'border-r-4', 'border-gold-500');
+
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+                btn.classList.remove('text-gold-400', 'font-bold');
+                btn.classList.add('text-slate-400');
+            });
+            const activeMobileNav = document.getElementById(`mobile-nav-${tabId}`);
+            if (activeMobileNav) activeMobileNav.classList.add('text-gold-400', 'font-bold');
+
+            const titles = {
+                dashboard: "Dashboard",
+                igrejas: "Igrejas & Horários",
+                voluntarios: "Servidores",
+                escalas: "Escalas",
+                lembretes: "Lembretes",
+                importador: "Importar Planilhas",
+                config: "Configurações"
+            };
+            document.getElementById('mobile-page-title').innerText = titles[tabId] || "SacraEscala";
+
+            if (tabId === 'lembretes') populateLembreteSelects();
+        }
+
+        // RENDER GERAL
+        function renderAll() {
+            renderGlobalFilterSelect();
+            renderDashboard();
+            renderIgrejas();
+            renderVoluntarios();
+            renderEscalas();
+            populateSelectOptions();
+        }
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-800' : 'bg-rose-800';
+            toast.className = `${bg} text-white text-xs px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-bounce pointer-events-auto transition-all`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${msg}`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function renderGlobalFilterSelect() {
+            const select = document.getElementById('global-paroquia-filter');
+            select.innerHTML = `<option value="">Todas as Paróquias / Capelas</option>` +
+                appState.igrejas.map(i => `<option value="${i.id}" ${globalParoquiaFilter === i.id ? 'selected' : ''}>${i.nome}</option>`).join('');
+        }
+
+        // ==================== DASHBOARD & ALERTAS ====================
+        function renderDashboard() {
+            const filteredEscalas = globalParoquiaFilter 
+                ? appState.escalas.filter(e => e.igrejaId === globalParoquiaFilter)
+                : appState.escalas;
+
+            const filteredVoluntarios = globalParoquiaFilter
+                ? appState.voluntarios.filter(v => v.igrejaId === globalParoquiaFilter)
+                : appState.voluntarios;
+
+            document.getElementById('stat-igrejas').innerText = appState.igrejas.length;
+            document.getElementById('stat-voluntarios').innerText = filteredVoluntarios.length;
+            document.getElementById('stat-escalas').innerText = filteredEscalas.length;
+
+            // Calcular Pendências / Missas Incompletas
+            let incompletasCount = 0;
+            filteredEscalas.forEach(esc => {
+                const totalServidores = esc.equipe.reduce((acc, eq) => acc + (eq.voluntarioIds ? eq.voluntarioIds.length : 0), 0);
+                if (totalServidores < 3) incompletasCount++;
+            });
+            document.getElementById('stat-pendentes').innerText = incompletasCount;
+
+            const alertBanner = document.getElementById('alertas-incompletude-banner');
+            if (incompletasCount > 0) {
+                alertBanner.classList.remove('hidden');
+                document.getElementById('alertas-incompletude-text').innerText = `Existem ${incompletasCount} celebrações com menos de 3 servidores escalados ou funções pendentes.`;
+            } else {
+                alertBanner.classList.add('hidden');
+            }
+
+            // Próximas Celebrações
+            const proxContainer = document.getElementById('dash-proximas-escalas');
+            if (filteredEscalas.length === 0) {
+                proxContainer.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nenhuma escala para o filtro selecionado.</p>`;
+            } else {
+                proxContainer.innerHTML = filteredEscalas.slice(0, 4).map(esc => {
+                    const igreja = appState.igrejas.find(i => i.id === esc.igrejaId);
+                    const dataFormatada = new Date(esc.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                    const totalServidores = esc.equipe.reduce((acc, eq) => acc + (eq.voluntarioIds ? eq.voluntarioIds.length : 0), 0);
+                    const isIncompleta = totalServidores < 3;
+
+                    return `
+                        <div class="p-4 bg-slate-50 rounded-xl border ${isIncompleta ? 'border-rose-200 bg-rose-50/30' : 'border-slate-100'} flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-bold text-navy-900 text-sm">${igreja ? igreja.nome : 'Igreja'}</h4>
+                                    ${isIncompleta ? `<span class="bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded-full"><i class="fa-solid fa-triangle-exclamation"></i> Vagas Abertas</span>` : ''}
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock text-gold-600"></i> ${dataFormatada} às ${esc.horario}</p>
+                            </div>
+                            <span class="text-xs ${isIncompleta ? 'bg-rose-100 text-rose-800' : 'bg-navy-50 text-navy-600'} px-3 py-1 rounded-full font-semibold self-start sm:self-center">
+                                ${totalServidores} servidores escalados
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Servidores por Função
+            const funcContainer = document.getElementById('dash-funcoes-breakdown');
+            funcContainer.innerHTML = FUNCOES_LITURGICAS.map(func => {
+                const count = filteredVoluntarios.filter(v => v.funcoes.includes(func)).length;
+                return `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-600">${func}</span>
+                        <span class="text-xs font-bold text-navy-900 bg-slate-100 px-2 py-0.5 rounded-md">${count}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==================== IGREJAS LOGIC ====================
+        function renderIgrejas() {
+            const container = document.getElementById('igrejas-list');
+            const list = globalParoquiaFilter ? appState.igrejas.filter(i => i.id === globalParoquiaFilter) : appState.igrejas;
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-slate-400 text-sm">Nenhuma igreja encontrada.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(ig => `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between space-y-4">
+                    <div>
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-serif font-bold text-lg text-navy-900">${ig.nome}</h3>
+                            <div class="flex gap-1">
+                                <button onclick="editIgreja('${ig.id}')" class="text-slate-400 hover:text-navy-600 p-1"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteIgreja('${ig.id}')" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> ${ig.endereco || 'Endereço não informado'}</p>
+                        
+                        <div class="mt-4">
+                            <p class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Horários Fixos:</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${(ig.horarios || []).map(h => `<span class="bg-amber-50 text-gold-600 border border-amber-200 text-[11px] px-2.5 py-1 rounded-lg font-medium">${h}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openIgrejaModal(igreja = null) {
+            document.getElementById('form-igreja').reset();
+            if (igreja) {
+                document.getElementById('modal-igreja-title').innerText = 'Editar Igreja';
+                document.getElementById('igreja-id').value = igreja.id;
+                document.getElementById('igreja-nome').value = igreja.nome;
+                document.getElementById('igreja-endereco').value = igreja.endereco;
+                document.getElementById('igreja-horarios').value = (igreja.horarios || []).join(', ');
+            } else {
+                document.getElementById('modal-igreja-title').innerText = 'Nova Igreja';
+                document.getElementById('igreja-id').value = '';
+            }
+            document.getElementById('modal-igreja').classList.remove('hidden');
+        }
+
+        function closeIgrejaModal() { document.getElementById('modal-igreja').classList.add('hidden'); }
+        function editIgreja(id) { const ig = appState.igrejas.find(i => i.id === id); if (ig) openIgrejaModal(ig); }
+        async function deleteIgreja(id) {
+            if (confirm('Deseja excluir esta igreja?')) {
+                appState.igrejas = appState.igrejas.filter(i => i.id !== id);
+                saveState();
+                showToast('Igreja removida!');
+                if (sb && currentCoordinator) {
+                    try {
+                        await sb.from('igreja_horarios').delete().eq('igreja_id', id);
+                        await sb.from('igrejas').delete().eq('id', id);
+                        showToast('✓ Removido do Supabase!');
+                    } catch (err) {
+                        console.error('Erro ao deletar do Supabase:', err);
+                    }
+                }
+            }
+        }
+
+        async function saveIgreja(e) {
+            e.preventDefault();
+            const id = document.getElementById('igreja-id').value || ('ig_' + Date.now());
+            const nome = document.getElementById('igreja-nome').value;
+            const endereco = document.getElementById('igreja-endereco').value;
+            const horariosRaw = document.getElementById('igreja-horarios').value;
+            const horarios = horariosRaw.split(',').map(h => h.trim()).filter(h => h.length > 0);
+
+            const index = appState.igrejas.findIndex(i => i.id === id);
+            if (index !== -1) {
+                appState.igrejas[index] = { id, nome, endereco, horarios };
+            } else {
+                appState.igrejas.push({ id, nome, endereco, horarios });
+            }
+            saveState();
+            closeIgrejaModal();
+            showToast('Igreja salva!');
+
+            if (sb && currentCoordinator) {
+                try {
+                    await sb.from('igrejas').upsert({ id, nome, endereco });
+                    await sb.from('igreja_horarios').delete().eq('igreja_id', id);
+                    if (horarios.length > 0) {
+                        const rows = horarios.map((h, i) => ({ igreja_id: id, ordem: i + 1, horario: h }));
+                        await sb.from('igreja_horarios').insert(rows);
+                    }
+                    showToast('✓ Sincronizado com Supabase!');
+                } catch (err) {
+                    console.error('Erro ao salvar no Supabase:', err);
+                }
+            }
+        }
+
+        // ==================== VOLUNTÁRIOS & INDISPONIBILIDADE ====================
+        function renderVoluntarios() {
+            const tableBody = document.getElementById('voluntarios-table-body');
+            const search = document.getElementById('filter-voluntario-search')?.value.toLowerCase() || '';
+            const filtroFuncao = document.getElementById('filter-voluntario-funcao')?.value || '';
+
+            let list = appState.voluntarios.filter(v => {
+                const matchGlobal = !globalParoquiaFilter || v.igrejaId === globalParoquiaFilter;
+                const matchSearch = v.nome.toLowerCase().includes(search) || v.phone.includes(search);
+                const matchFuncao = !filtroFuncao || v.funcoes.includes(filtroFuncao);
+                return matchGlobal && matchSearch && matchFuncao;
+            });
+
+            if (list.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400 text-xs">Nenhum servidor encontrado.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = list.map(v => {
+                const igreja = appState.igrejas.find(i => i.id === v.igrejaId);
+                const temIndisponivel = v.indisponivelInicio && v.indisponivelFim;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-3 px-4 font-semibold text-slate-800">${v.nome}</td>
+                        <td class="py-3 px-4 text-slate-600 font-mono text-xs">${v.phone}</td>
+                        <td class="py-3 px-4 text-slate-600">${igreja ? igreja.nome : 'Nenhuma'}</td>
+                        <td class="py-3 px-4">
+                            <div class="flex flex-wrap gap-1">
+                                ${v.funcoes.map(f => `<span class="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded font-medium">${f}</span>`).join('')}
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            ${temIndisponivel ? 
+                                `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-1 rounded-md font-bold flex items-center gap-1 w-max"><i class="fa-solid fa-plane-departure"></i> ${v.indisponivelInicio} até ${v.indisponivelFim}</span>` : 
+                                `<span class="text-emerald-600 text-[10px] font-bold">✓ Disponível</span>`}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="editVoluntario('${v.id}')" class="text-slate-400 hover:text-navy-600 p-1"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteVoluntario('${v.id}')" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openVoluntarioModal(voluntario = null) {
+            document.getElementById('form-voluntario').reset();
+            
+            const boxContainer = document.getElementById('funcoes-checkboxes');
+            boxContainer.innerHTML = FUNCOES_LITURGICAS.map(f => `
+                <label class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100">
+                    <input type="checkbox" name="funcoes" value="${f}" class="rounded text-navy-600 focus:ring-navy-600">
+                    <span class="text-slate-700">${f}</span>
+                </label>
+            `).join('');
+
+            const selectIgreja = document.getElementById('voluntario-igreja');
+            selectIgreja.innerHTML = appState.igrejas.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+
+            if (voluntario) {
+                document.getElementById('modal-voluntario-title').innerText = 'Editar Servidor';
+                document.getElementById('voluntario-id').value = voluntario.id;
+                document.getElementById('voluntario-nome').value = voluntario.nome;
+                document.getElementById('voluntario-phone').value = voluntario.phone;
+                document.getElementById('voluntario-igreja').value = voluntario.igrejaId;
+                document.getElementById('voluntario-indisponivel-inicio').value = voluntario.indisponivelInicio || '';
+                document.getElementById('voluntario-indisponivel-fim').value = voluntario.indisponivelFim || '';
+
+                document.querySelectorAll('input[name="funcoes"]').forEach(cb => {
+                    if (voluntario.funcoes.includes(cb.value)) cb.checked = true;
+                });
+            } else {
+                document.getElementById('modal-voluntario-title').innerText = 'Novo Servidor / Voluntário';
+                document.getElementById('voluntario-id').value = '';
+            }
+
+            document.getElementById('modal-voluntario').classList.remove('hidden');
+        }
+
+        function closeVoluntarioModal() { document.getElementById('modal-voluntario').classList.add('hidden'); }
+        function editVoluntario(id) { const v = appState.voluntarios.find(vol => vol.id === id); if (v) openVoluntarioModal(v); }
+        async function deleteVoluntario(id) {
+            if (confirm('Deseja excluir este voluntário?')) {
+                appState.voluntarios = appState.voluntarios.filter(v => v.id !== id);
+                saveState();
+                showToast('Servidor removido!');
+                if (sb && currentCoordinator) {
+                    try {
+                        await sb.from('voluntario_funcoes').delete().eq('voluntario_id', id);
+                        await sb.from('voluntarios').delete().eq('id', id);
+                        showToast('✓ Removido do Supabase!');
+                    } catch (err) {
+                        console.error('Erro ao deletar voluntário no Supabase:', err);
+                    }
+                }
+            }
+        }
+
+        async function saveVoluntario(e) {
+            e.preventDefault();
+            const id = document.getElementById('voluntario-id').value || ('v_' + Date.now());
+            const nome = document.getElementById('voluntario-nome').value;
+            let phone = document.getElementById('voluntario-phone').value.replace(/\D/g, '');
+            if (!phone.startsWith('55') && phone.length <= 11) phone = '55' + phone;
+
+            const igrejaId = document.getElementById('voluntario-igreja').value;
+            const indisponivelInicio = document.getElementById('voluntario-indisponivel-inicio').value || null;
+            const indisponivelFim = document.getElementById('voluntario-indisponivel-fim').value || null;
+
+            const funcoes = [];
+            document.querySelectorAll('input[name="funcoes"]:checked').forEach(cb => funcoes.push(cb.value));
+
+            const idx = appState.voluntarios.findIndex(v => v.id === id);
+            if (idx !== -1) {
+                appState.voluntarios[idx] = { id, nome, phone, igrejaId, funcoes, indisponivelInicio: indisponivelInicio || '', indisponivelFim: indisponivelFim || '' };
+            } else {
+                appState.voluntarios.push({ id, nome, phone, igrejaId, funcoes, indisponivelInicio: indisponivelInicio || '', indisponivelFim: indisponivelFim || '' });
+            }
+
+            saveState();
+            closeVoluntarioModal();
+            showToast('Servidor salvo!');
+
+            if (sb && currentCoordinator) {
+                try {
+                    await sb.from('voluntarios').upsert({
+                        id,
+                        nome,
+                        phone,
+                        igreja_id: igrejaId,
+                        indisponivel_inicio: indisponivelInicio,
+                        indisponivel_fim: indisponivelFim
+                    });
+                    await sb.from('voluntario_funcoes').delete().eq('voluntario_id', id);
+                    if (funcoes.length > 0) {
+                        const rows = funcoes.map(f => ({ voluntario_id: id, funcao: f }));
+                        await sb.from('voluntario_funcoes').insert(rows);
+                    }
+                    showToast('✓ Sincronizado com Supabase!');
+                } catch (err) {
+                    console.error('Erro ao salvar voluntário no Supabase:', err);
+                }
+            }
+        }
+
+        // ==================== ESCALAS & MÚLTIPLOS SERVIDORES ====================
+        function renderEscalas() {
+            const container = document.getElementById('escalas-list');
+            const list = globalParoquiaFilter ? appState.escalas.filter(e => e.igrejaId === globalParoquiaFilter) : appState.escalas;
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="bg-white p-8 rounded-2xl border text-center text-slate-400 text-sm">Nenhuma escala cadastrada.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(esc => {
+                const igreja = appState.igrejas.find(i => i.id === esc.igrejaId);
+                const dataFormatada = new Date(esc.data + 'T00:00:00').toLocaleDateString('pt-BR');
+
+                return `
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
+                            <div>
+                                <h3 class="font-serif font-bold text-lg text-navy-900">${igreja ? igreja.nome : 'Igreja'}</h3>
+                                <p class="text-xs text-slate-500 font-medium"><i class="fa-regular fa-calendar text-gold-600 mr-1"></i> ${dataFormatada} às ${esc.horario}</p>
+                            </div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button onclick="exportarEscalaPDF('${esc.id}')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg font-semibold transition-all border border-emerald-200">
+                                    <i class="fa-solid fa-file-pdf"></i> Gerar PDF
+                                </button>
+                                <button onclick="imprimirMuralSacristia('${esc.id}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold transition-all">
+                                    <i class="fa-solid fa-print"></i> Mural A4
+                                </button>
+                                <button onclick="editarEscala('${esc.id}')" class="text-xs bg-navy-50 hover:bg-navy-100 text-navy-700 px-3 py-1.5 rounded-lg font-semibold transition-all">
+                                    <i class="fa-solid fa-pen"></i> Editar
+                                </button>
+                                <button onclick="deleteEscala('${esc.id}')" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-lg indisponivel-btn font-semibold transition-all">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Grade de Funções Litúrgicas Escaladas -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                            ${esc.equipe.map(eq => {
+                                const vols = (eq.voluntarioIds || []).map(vid => appState.voluntarios.find(v => v.id === vid)).filter(Boolean);
+                                return `
+                                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${eq.funcao}</p>
+                                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${eq.status === 'CONFIRMADO' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}">${eq.status || 'PENDENTE'}</span>
+                                        </div>
+                                        <div class="mt-1 flex flex-wrap gap-1">
+                                            ${vols.length > 0 
+                                                ? vols.map(v => `<span class="bg-white border border-slate-200 text-navy-900 text-xs px-2 py-0.5 rounded-md font-semibold">${v.nome}</span>`).join('')
+                                                : `<span class="text-xs text-rose-500 italic">Nenhum voluntário</span>`}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openEscalaModal(escala = null) {
+            document.getElementById('form-escala').reset();
+
+            const selectIgreja = document.getElementById('escala-igreja');
+            selectIgreja.innerHTML = appState.igrejas.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+
+            if (escala) {
+                document.getElementById('modal-escala-title').innerText = 'Editar Escala';
+                document.getElementById('escala-id').value = escala.id;
+                document.getElementById('escala-igreja').value = escala.igrejaId;
+                document.getElementById('escala-data').value = escala.data;
+                document.getElementById('escala-horario').value = escala.horario;
+            } else {
+                document.getElementById('modal-escala-title').innerText = 'Montar Nova Escala';
+                document.getElementById('escala-id').value = '';
+                document.getElementById('escala-data').value = new Date().toISOString().split('T')[0];
+            }
+
+            renderEscalaFuncoesFields(escala);
+            document.getElementById('modal-escala').classList.remove('hidden');
+        }
+
+        function closeEscalaModal() { document.getElementById('modal-escala').classList.add('hidden'); }
+
+        function isVoluntarioIndisponivel(vol, dataMissa) {
+            if (!vol.indisponivelInicio || !vol.indisponivelFim || !dataMissa) return false;
+            return dataMissa >= vol.indisponivelInicio && dataMissa <= vol.indisponivelFim;
+        }
+
+        function renderEscalaFuncoesFields(escala = null) {
+            const container = document.getElementById('escala-funcoes-assignment');
+            const dataMissa = document.getElementById('escala-data').value;
+            const todosVoluntarios = appState.voluntarios;
+
+            container.innerHTML = FUNCOES_LITURGICAS.map(funcao => {
+                let selectedIds = [];
+                if (escala && escala.equipe) {
+                    const eqItem = escala.equipe.find(e => e.funcao === funcao);
+                    if (eqItem && eqItem.voluntarioIds) selectedIds = eqItem.voluntarioIds;
+                }
+
+                return `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-navy-900">${funcao}</span>
+                            <span class="text-[10px] text-slate-400">Marque múltiplos voluntários</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                            ${todosVoluntarios.map(v => {
+                                const isChecked = selectedIds.includes(v.id);
+                                const indisponivel = isVoluntarioIndisponivel(v, dataMissa);
+                                const apto = v.funcoes.includes(funcao);
+
+                                return `
+                                    <label class="flex items-center gap-2 p-2 rounded-lg border text-xs cursor-pointer ${indisponivel ? 'bg-rose-50 border-rose-200 text-rose-700 opacity-60' : 'bg-white border-slate-200 hover:bg-slate-100'}">
+                                        <input type="checkbox" name="escala_func_${funcao}" value="${v.id}" ${isChecked ? 'checked' : ''} class="rounded text-navy-600 focus:ring-navy-600">
+                                        <span class="truncate font-medium">${v.nome}</span>
+                                        ${indisponivel ? '<span class="text-[9px] bg-rose-200 px-1 rounded font-bold">Férias</span>' : ''}
+                                        ${apto ? '<span class="text-[9px] text-emerald-600 font-bold ml-auto">✓</span>' : ''}
+                                    </label>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editarEscala(id) {
+            const e = appState.escalas.find(esc => esc.id === id);
+            if (e) openEscalaModal(e);
+        }
+
+        async function deleteEscala(id) {
+            if (confirm('Deseja excluir esta escala?')) {
+                appState.escalas = appState.escalas.filter(e => e.id !== id);
+                saveState();
+                showToast('Escala deletada!');
+                if (sb && currentCoordinator) {
+                    try {
+                        await sb.from('escala_confirmacoes').delete().eq('escala_id', id);
+                        await sb.from('escala_funcoes').delete().eq('escala_id', id);
+                        await sb.from('escalas').delete().eq('id', id);
+                        showToast('✓ Removido do Supabase!');
+                    } catch (err) {
+                        console.error('Erro ao deletar escala no Supabase:', err);
+                    }
+                }
+            }
+        }
+
+        async function saveEscala(e) {
+            e.preventDefault();
+            const id = document.getElementById('escala-id').value || ('esc_' + Date.now());
+            const igrejaId = document.getElementById('escala-igreja').value;
+            const data = document.getElementById('escala-data').value;
+            const horario = document.getElementById('escala-horario').value;
+
+            const equipe = [];
+            FUNCOES_LITURGICAS.forEach(funcao => {
+                const checkedBoxes = document.querySelectorAll(`input[name="escala_func_${funcao}"]:checked`);
+                const voluntarioIds = Array.from(checkedBoxes).map(cb => cb.value);
+                if (voluntarioIds.length > 0) {
+                    equipe.push({ funcao, voluntarioIds, status: "PENDENTE" });
+                }
+            });
+
+            if (equipe.length === 0) {
+                alert('Selecione ao menos um voluntário para a escala.');
+                return;
+            }
+
+            const idx = appState.escalas.findIndex(esc => esc.id === id);
+            if (idx !== -1) {
+                appState.escalas[idx] = { id, igrejaId, data, horario, equipe };
+            } else {
+                appState.escalas.push({ id, igrejaId, data, horario, equipe });
+            }
+
+            saveState();
+            closeEscalaModal();
+            showToast('Escala salva!');
+
+            if (sb && currentCoordinator) {
+                try {
+                    await sb.from('escalas').upsert({ id, igreja_id: igrejaId, data, horario });
+                    await sb.from('escala_funcoes').delete().eq('escala_id', id);
+                    await sb.from('escala_confirmacoes').delete().eq('escala_id', id);
+
+                    const funcsRows = [];
+                    const confRows = [];
+                    equipe.forEach(eq => {
+                        (eq.voluntarioIds || []).forEach(vid => {
+                            funcsRows.push({ escala_id: id, funcao: eq.funcao, voluntario_id: vid });
+                            confRows.push({ escala_id: id, voluntario_id: vid, status: eq.status || 'PENDENTE' });
+                        });
+                    });
+
+                    if (funcsRows.length > 0) await sb.from('escala_funcoes').insert(funcsRows);
+                    if (confRows.length > 0) await sb.from('escala_confirmacoes').insert(confRows);
+
+                    showToast('✓ Sincronizado com Supabase!');
+                } catch (err) {
+                    console.error('Erro ao salvar escala no Supabase:', err);
+                }
+            }
+        }
+
+        // ==================== IMPRESSÃO E PDF A4 ====================
+        function generatePrintableHTML(escalaId) {
+            const esc = appState.escalas.find(e => e.id === escalaId);
+            if (!esc) return '';
+            const igreja = appState.igrejas.find(i => i.id === esc.igrejaId);
+            const dataFormatada = new Date(esc.data + 'T00:00:00').toLocaleDateString('pt-BR');
+
+            return `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+                    <div style="text-align: center; border-bottom: 2px solid #103058; padding-bottom: 12px; margin-bottom: 20px;">
+                        <h1 style="font-size: 24px; font-weight: bold; color: #103058; margin: 0;">ESCALA DA SANTA MISSA</h1>
+                        <h2 style="font-size: 18px; color: #d4af37; margin: 4px 0;">${igreja ? igreja.nome : 'Paróquia'}</h2>
+                        <p style="font-size: 14px; color: #64748b; margin: 0;">Data: <strong>${dataFormatada}</strong> às <strong>${esc.horario}</strong></p>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                        <thead>
+                            <tr style="background-color: #103058; color: white; font-size: 13px; text-transform: uppercase;">
+                                <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: left;">Função Litúrgica</th>
+                                <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: left;">Servidores Escalados</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${esc.equipe.map(eq => {
+                                const vols = (eq.voluntarioIds || []).map(vid => appState.voluntarios.find(v => v.id === vid)).filter(Boolean);
+                                const nomes = vols.map(v => v.nome).join(', ') || 'Nenhum servidor';
+                                return `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 10px; border: 1px solid #cbd5e1; font-weight: bold; font-size: 13px; color: #0b1d3a;">${eq.funcao}</td>
+                                        <td style="padding: 10px; border: 1px solid #cbd5e1; font-size: 13px; color: #334155;">${nomes}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 30px; font-size: 11px; text-align: center; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                        SacraEscala - Gestão Litúrgica Paroquial • Favor chegar com 15 minutos de antecedência.
+                    </div>
+                </div>
+            `;
+        }
+
+        function imprimirMuralSacristia(escalaId) {
+            const area = document.getElementById('printable-escala-area');
+            area.innerHTML = generatePrintableHTML(escalaId);
+            window.print();
+        }
+
+        async function exportarEscalaPDF(escalaId) {
+            const area = document.getElementById('printable-escala-area');
+            area.innerHTML = generatePrintableHTML(escalaId);
+            area.classList.remove('hidden');
+
+            showToast('Gerando arquivo PDF...', 'success');
+
+            try {
+                const canvas = await html2canvas(area, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save(`Escala_Missa_${escalaId}.pdf`);
+                showToast('PDF baixado com sucesso!');
+            } catch (e) {
+                alert('Erro ao gerar PDF: ' + e.message);
+            } finally {
+                area.classList.add('hidden');
+            }
+        }
+
+        // ==================== LEMBRETES & DISPAROS ====================
+        function populateLembreteSelects() {
+            const escalaSelect = document.getElementById('lembrete-escala-select');
+            if (!escalaSelect) return;
+
+            const list = globalParoquiaFilter ? appState.escalas.filter(e => e.igrejaId === globalParoquiaFilter) : appState.escalas;
+
+            if (list.length === 0) {
+                escalaSelect.innerHTML = `<option value="">Nenhuma escala cadastrada</option>`;
+                document.getElementById('lembrete-voluntario-select').innerHTML = `<option value="">--</option>`;
+                updateLembretePreview();
+                return;
+            }
+
+            escalaSelect.innerHTML = list.map(esc => {
+                const igreja = appState.igrejas.find(i => i.id === esc.igrejaId);
+                const dataFormatada = new Date(esc.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                return `<option value="${esc.id}">${igreja ? igreja.nome : 'Igreja'} - ${dataFormatada} às ${esc.horario}</option>`;
+            }).join('');
+
+            populateLembreteVoluntarios();
+        }
+
+        function populateLembreteVoluntarios() {
+            const escalaId = document.getElementById('lembrete-escala-select').value;
+            const volSelect = document.getElementById('lembrete-voluntario-select');
+            
+            const escala = appState.escalas.find(e => e.id === escalaId);
+            if (!escala) {
+                volSelect.innerHTML = `<option value="">--</option>`;
+                updateLembretePreview();
+                return;
+            }
+
+            const todosServidores = [];
+            escala.equipe.forEach(eq => {
+                (eq.voluntarioIds || []).forEach(vid => {
+                    const vol = appState.voluntarios.find(v => v.id === vid);
+                    if (vol && !todosServidores.some(s => s.id === vol.id)) {
+                        todosServidores.push({ ...vol, funcao: eq.funcao });
+                    }
+                });
+            });
+
+            volSelect.innerHTML = `<option value="ALL">📢 Todos da Escala (${todosServidores.length})</option>` + 
+                todosServidores.map(vol => `<option value="${vol.id}">${vol.nome} (${vol.funcao})</option>`).join('');
+
+            updateLembretePreview();
+        }
+
+        function generateLembreteText(escala, voluntarioId, obsExtra, tipoMsg) {
+            if (!escala) return "Nenhuma escala selecionada.";
+            
+            const igreja = appState.igrejas.find(i => i.id === escala.igrejaId);
+            const dataFormatada = new Date(escala.data + 'T00:00:00').toLocaleDateString('pt-BR');
+
+            if (tipoMsg === 'SUBSTITUICAO') {
+                const vol = appState.voluntarios.find(v => v.id === voluntarioId);
+                let txt = `*⚠️ PEDIDO DE SUBSTITUIÇÃO DE ESCALA ⚠️*\n\n`;
+                txt += `Paz e bem! O servidor *${vol ? vol.nome : 'Voluntário'}* precisará de substituto para a missa abaixo:\n\n`;
+                txt += `📍 *Local:* ${igreja ? igreja.nome : 'Igreja'}\n`;
+                txt += `📅 *Data:* ${dataFormatada}\n`;
+                txt += `⏰ *Horário:* ${escala.horario}\n\n`;
+                txt += `Alguém disponível para assumir o serviço no altar? Responda aqui no grupo! 🙏`;
+                return txt;
+            }
+
+            let text = `*✝ PASTORAL LITÚRGICA - LEMBRETE DE ESCALA ✝*\n\n`;
+            text += `Paz e bem!\nLembramos da sua escala para a Santa Missa:\n\n`;
+            text += `📍 *Local:* ${igreja ? igreja.nome : 'Igreja'}\n`;
+            text += `📅 *Data:* ${dataFormatada}\n`;
+            text += `⏰ *Horário:* ${escala.horario}\n\n`;
+
+            if (voluntarioId === 'ALL' || !voluntarioId) {
+                text += `*Equipe Escalada:*\n`;
+                escala.equipe.forEach(eq => {
+                    const vols = (eq.voluntarioIds || []).map(vid => appState.voluntarios.find(v => v.id === vid)).filter(Boolean);
+                    text += `• *${eq.funcao}:* ${vols.map(v => v.nome).join(', ') || 'Pendente'}\n`;
+                });
+            } else {
+                const vol = appState.voluntarios.find(v => v.id === voluntarioId);
+                text += `👤 *Servidor:* ${vol ? vol.nome : ''}\n`;
+            }
+
+            if (obsExtra && obsExtra.trim().length > 0) {
+                text += `\n📝 *Observação:* ${obsExtra.trim()}\n`;
+            }
+
+            text += `\nContamos com sua presença! Deus abençoe! 🙏`;
+            return text;
+        }
+
+        function updateLembretePreview() {
+            const escalaId = document.getElementById('lembrete-escala-select').value;
+            const voluntarioId = document.getElementById('lembrete-voluntario-select').value;
+            const obsExtra = document.getElementById('lembrete-obs-extra').value;
+            const tipoMsg = document.getElementById('lembrete-tipo-msg').value;
+
+            const escala = appState.escalas.find(e => e.id === escalaId);
+            const rawText = generateLembreteText(escala, voluntarioId, obsExtra, tipoMsg);
+
+            const htmlText = rawText
+                .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+                .replace(/_(.*?)_/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+
+            document.getElementById('whatsapp-preview-box').innerHTML = htmlText;
+        }
+
+        function dispararWhatsAppWeb() {
+            const escalaId = document.getElementById('lembrete-escala-select').value;
+            const voluntarioId = document.getElementById('lembrete-voluntario-select').value;
+            const obsExtra = document.getElementById('lembrete-obs-extra').value;
+            const tipoMsg = document.getElementById('lembrete-tipo-msg').value;
+
+            const escala = appState.escalas.find(e => e.id === escalaId);
+            if (!escala) return alert('Selecione uma escala.');
+
+            if (voluntarioId === 'ALL') {
+                escala.equipe.forEach(eq => {
+                    (eq.voluntarioIds || []).forEach(vid => {
+                        const vol = appState.voluntarios.find(v => v.id === vid);
+                        if (vol && vol.phone) {
+                            const txt = generateLembreteText(escala, vol.id, obsExtra, tipoMsg);
+                            window.open(`https://wa.me/${vol.phone}?text=${encodeURIComponent(txt)}`, '_blank');
+                        }
+                    });
+                });
+            } else {
+                const vol = appState.voluntarios.find(v => v.id === voluntarioId);
+                if (!vol || !vol.phone) return alert('Voluntário sem telefone cadastrado.');
+                const txt = generateLembreteText(escala, vol.id, obsExtra, tipoMsg);
+                window.open(`https://wa.me/${vol.phone}?text=${encodeURIComponent(txt)}`, '_blank');
+            }
+        }
+
+        function simularEnvioWebhook() {
+            if (!appState.config.webhookUrl) {
+                alert('Configure a URL do Webhook nas Configurações.');
+                switchTab('config');
+                return;
+            }
+            showToast('Simulando envio de disparos automáticos...', 'success');
+        }
+
+        // ==================== IMPORTADOR DE PLANILHAS CSV / XLSX ====================
+        function handleSpreadsheetUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    parsedImportData = json;
+                    renderImportPreview(json);
+                } catch (err) {
+                    alert('Erro ao processar planilha: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderImportPreview(data) {
+            const container = document.getElementById('import-preview-container');
+            const btn = document.getElementById('btn-confirm-import');
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<p class="italic text-rose-500">Planilha vazia ou sem colunas válidas.</p>`;
+                btn.disabled = true;
+                return;
+            }
+
+            container.innerHTML = `
+                <p class="font-semibold text-emerald-700">✓ ${data.length} linhas encontradas com sucesso!</p>
+                <div class="max-h-40 overflow-y-auto border p-2 rounded bg-slate-50 space-y-1">
+                    ${data.slice(0, 5).map(row => `
+                        <div class="border-b pb-1">
+                            <strong>${row.Nome || row.nome || 'Servidor'}</strong> - ${row.WhatsApp || row.phone || ''} (${row.Funcao || row.funcoes || ''})
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            btn.disabled = false;
+        }
+
+        function confirmImportData() {
+            if (!parsedImportData) return;
+
+            let cont = 0;
+            parsedImportData.forEach(row => {
+                const nome = row.Nome || row.nome;
+                let phone = String(row.WhatsApp || row.phone || '').replace(/\D/g, '');
+                if (!phone.startsWith('55') && phone.length <= 11) phone = '55' + phone;
+
+                if (nome && phone) {
+                    const funcoesRaw = String(row.Funcoes || row.funcoes || 'Coroinha').split(',');
+                    const funcoes = funcoesRaw.map(f => f.trim()).filter(Boolean);
+
+                    appState.voluntarios.push({
+                        id: 'v_imp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                        nome,
+                        phone,
+                        igrejaId: appState.igrejas[0] ? appState.igrejas[0].id : '',
+                        funcoes: funcoes.length ? funcoes : ["Coroinha"],
+                        indisponivelInicio: "",
+                        indisponivelFim: ""
+                    });
+                    cont++;
+                }
+            });
+
+            saveState();
+            showToast(`${cont} servidores importados com sucesso!`);
+            switchTab('voluntarios');
+        }
+
+        function downloadCSVTemplate() {
+            const csvContent = "data:text/csv;charset=utf-8,Nome,WhatsApp,Funcoes\nJoão da Silva,11988887777,Coroinha\nMaria Oliveira,11977776666,Primeira Leitura; Salmista\nCarlos Souza,11966665555,Ministro Extraordinário da Eucaristia";
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "modelo_importacao_sacraescala.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        // ==================== CONFIGURAÇÕES & BACKUP LOGIC ====================
+        function populateSelectOptions() {
+            const fFuncao = document.getElementById('filter-voluntario-funcao');
+            if (fFuncao) {
+                fFuncao.innerHTML = `<option value="">Todas as Funções</option>` + 
+                    FUNCOES_LITURGICAS.map(f => `<option value="${f}">${f}</option>`).join('');
+            }
+
+            document.getElementById('cfg-webhook-url').value = appState.config.webhookUrl || '';
+            document.getElementById('cfg-webhook-token').value = appState.config.webhookToken || '';
+        }
+
+        function saveApiSettings() {
+            appState.config.webhookUrl = document.getElementById('cfg-webhook-url').value;
+            appState.config.webhookToken = document.getElementById('cfg-webhook-token').value;
+            saveState();
+            showToast('Configurações salvas!');
+        }
+
+        function exportBackupData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `SacraEscala_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function importBackupData(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.igrejas && imported.voluntarios) {
+                        appState = imported;
+                        saveState();
+                        showToast('Backup restaurado!');
+                    } else {
+                        alert('Formato inválido.');
+                    }
+                } catch (err) {
+                    alert('Erro ao importar JSON.');
+                }
+            };
+            if (event.target.files[0]) fileReader.readAsText(event.target.files[0]);
+        }
+
+        function resetSystemData() {
+            if (confirm('Restaurar dados iniciais?')) {
+                appState = JSON.parse(JSON.stringify(INITIAL_DATA));
+                saveState();
+                showToast('Dados resetados!');
+            }
+        }
+    </script>
+</body>
+</html>
