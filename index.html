@@ -378,11 +378,11 @@
                     </div>
 
                     <div class="pt-2 flex flex-col sm:flex-row gap-3">
-                        <button onclick="dispararWhatsAppWeb()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all">
+                        <button type="button" onclick="dispararWhatsAppWeb()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all" title="Abre o WhatsApp diretamente">
                             <i class="fa-brands fa-whatsapp text-lg"></i> Disparar Direct (wa.me)
                         </button>
-                        <button onclick="simularEnvioWebhook()" class="bg-navy-800 hover:bg-navy-900 text-white font-semibold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all">
-                            <i class="fa-solid fa-robot"></i> Disparo via API
+                        <button type="button" onclick="dispararWaAkgEmMassa()" class="flex-1 bg-navy-800 hover:bg-navy-900 text-white font-semibold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all border border-navy-700" title="Disparo automático em lote pelo servidor WA-AKG">
+                            <i class="fa-solid fa-bolt text-amber-400"></i> Disparo em Massa (WA-AKG)
                         </button>
                     </div>
                 </div>
@@ -465,24 +465,40 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Automação API -->
+                <!-- Automação WA-AKG Gateway & API -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-                    <h3 class="font-serif font-bold text-lg text-navy-900 flex items-center gap-2">
-                        <i class="fa-solid fa-plug text-navy-600"></i> Automação WhatsApp API
-                    </h3>
-                    <p class="text-xs text-slate-500">Configure sua URL Webhook para disparos automáticos via Z-API, Evolution API ou Twilio.</p>
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-serif font-bold text-lg text-navy-900 flex items-center gap-2">
+                            <i class="fa-solid fa-server text-emerald-600"></i> Gateway WA-AKG (Disparo em Massa)
+                        </h3>
+                        <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Next.js + Baileys</span>
+                    </div>
+                    <p class="text-xs text-slate-500 leading-relaxed">Conecte sua instância do servidor <a href="https://github.com/mrifqidaffaaditya/WA-AKG" target="_blank" class="text-navy-600 underline font-semibold">WA-AKG</a> para disparar lembretes litúrgicos em massa automaticamente sem precisar do celular em mãos.</p>
                     
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">URL Endpoint do Webhook:</label>
-                        <input type="url" id="cfg-webhook-url" placeholder="https://api.z-api.io/instances/..." class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">URL Base do Servidor WA-AKG:</label>
+                        <input type="url" id="cfg-waakg-url" placeholder="Ex: https://meu-wa-akg.railway.app ou http://localhost:3000" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Token de Autenticação (Bearer):</label>
-                        <input type="password" id="cfg-webhook-token" placeholder="••••••••••••••••••••" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ID da Sessão (Session ID):</label>
+                            <input type="text" id="cfg-waakg-session" placeholder="Ex: paroquia-01" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Chave de API (X-API-Key):</label>
+                            <input type="password" id="cfg-waakg-apikey" placeholder="••••••••••••••••••••" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-navy-600">
+                        </div>
                     </div>
-                    <button onclick="saveApiSettings()" class="bg-navy-600 hover:bg-navy-800 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-all">
-                        Salvar Configurações API
-                    </button>
+
+                    <div class="flex flex-wrap items-center gap-2 pt-1">
+                        <button type="button" onclick="testarConexaoWaAkg()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all">
+                            <i class="fa-solid fa-satellite-dish"></i> Testar Conexão
+                        </button>
+                        <button type="button" onclick="saveWaAkgSettings()" class="bg-navy-900 hover:bg-navy-800 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all">
+                            <i class="fa-solid fa-floppy-disk"></i> Salvar Configurações WA-AKG
+                        </button>
+                    </div>
+                    <div id="waakg-test-status" class="text-xs font-semibold p-2.5 rounded-lg bg-slate-50 border border-slate-200 hidden"></div>
                 </div>
 
                 <!-- Backup JSON -->
@@ -745,6 +761,82 @@
         </div>
     </div>
 
+    
+    <!-- ==================== MODAL DE CONFIRMAÇÃO DO VOLUNTÁRIO (VIA LINK WHATSAPP) ==================== -->
+    <div id="modal-confirmacao" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-amber-200/50 animate-in fade-in zoom-in-95 duration-200">
+            <!-- Top Banner Litúrgico -->
+            <div id="conf-modal-header" class="p-6 text-center text-white relative bg-gradient-to-br from-emerald-800 via-navy-900 to-navy-950">
+                <div id="conf-modal-icon" class="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-3 shadow-lg">
+                    <i class="fa-solid fa-check-double text-2xl text-emerald-300"></i>
+                </div>
+                <span class="text-[11px] font-bold tracking-widest uppercase text-amber-300/90 font-serif">Santuário & Paróquia • Confirmação Litúrgica</span>
+                <h3 id="conf-modal-title" class="font-serif font-bold text-2xl mt-1 text-white">Presença Confirmada!</h3>
+                <p id="conf-modal-subtitle" class="text-xs text-slate-200 mt-1 max-w-sm mx-auto">Deus seja louvado pelo seu ministério e disponibilidade no serviço do altar.</p>
+            </div>
+
+            <!-- Conteúdo do Card -->
+            <div class="p-6 space-y-4">
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-navy-100 text-navy-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fa-solid fa-church text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Igreja / Celebração</p>
+                            <p id="conf-info-igreja" class="font-bold text-navy-900 text-sm">Carregando...</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">Data</p>
+                                <p id="conf-info-data" class="font-bold text-navy-900 text-xs">--/--/----</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-regular fa-clock text-slate-400 text-xs"></i>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">Horário</p>
+                                <p id="conf-info-horario" class="font-bold text-navy-900 text-xs">--:--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-200 flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fa-solid fa-user-tag text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Servidor & Função</p>
+                            <p id="conf-info-servidor" class="font-bold text-navy-900 text-sm">Nome do Servidor</p>
+                            <p id="conf-info-funcao" class="text-xs text-amber-800 font-semibold">Cerimoniário</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botão de Ação / Pedido de Troca no Grupo -->
+                <div id="conf-substituicao-action" class="hidden">
+                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-2">
+                        <p class="font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1 text-amber-600"></i> Precisa que outro irmão te substitua?</p>
+                        <p class="text-slate-600 text-[11px]">Você pode avisar seus colegas no grupo paroquial com um único clique:</p>
+                        <button type="button" id="conf-btn-pedir-troca" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-sm transition">
+                            <i class="fa-brands fa-whatsapp text-base"></i> Pedir Substituto no WhatsApp
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-center">
+                    <button type="button" onclick="fecharModalConfirmacao()" class="w-full bg-navy-900 hover:bg-navy-800 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check"></i> Concluir e Acessar Sistema
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT LOGIC -->
     <script>
         // LISTA COMPLETA DE FUNÇÕES LITÚRGICAS
@@ -814,6 +906,7 @@
             switchTab('dashboard');
             await initSupabaseAuth();
             await syncFromSupabase();
+            await checkUrlConfirmation();
         });
 
         async function initSupabaseAuth() {
@@ -1455,7 +1548,19 @@
                                         <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
                                             <div class="flex items-center justify-between">
                                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${eq.funcao}</p>
-                                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${eq.status === 'CONFIRMADO' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}">${eq.status || 'PENDENTE'}</span>
+                                                ${(() => {
+                                                    const st = eq.status || 'PENDENTE';
+                                                    let badgeCls = 'bg-amber-100 text-amber-800';
+                                                    let badgeLbl = 'PENDENTE';
+                                                    if (st === 'CONFIRMADO') {
+                                                        badgeCls = 'bg-emerald-100 text-emerald-700 font-bold';
+                                                        badgeLbl = 'CONFIRMADO';
+                                                    } else if (st === 'SUBSTITUICAO') {
+                                                        badgeCls = 'bg-rose-100 text-rose-700 font-bold animate-pulse';
+                                                        badgeLbl = '⚠️ PRECISA SUBSTITUTO';
+                                                    }
+                                                    return `<span class="text-[9px] px-1.5 py-0.5 rounded ${badgeCls}">${badgeLbl}</span>`;
+                                                })()}
                                             </div>
                                             <div class="mt-1 flex flex-wrap gap-1">
                                                 ${vols.length > 0 
@@ -1982,11 +2087,12 @@
             
             const igreja = appState.igrejas.find(i => i.id === escala.igrejaId);
             const dataFormatada = new Date(escala.data + 'T00:00:00').toLocaleDateString('pt-BR');
+            const baseUrl = window.location.origin + window.location.pathname;
 
             if (tipoMsg === 'SUBSTITUICAO') {
                 const vol = appState.voluntarios.find(v => v.id === voluntarioId);
                 let txt = `*⚠️ PEDIDO DE SUBSTITUIÇÃO DE ESCALA ⚠️*\n\n`;
-                txt += `Paz e bem! O servidor *${vol ? vol.nome : 'Voluntário'}* precisará de substituto para a missa abaixo:\n\n`;
+                txt += `Paz e bem! O servidor *${vol ? vol.nome : 'Voluntário'}* precisará de substituto para a celebração abaixo:\n\n`;
                 txt += `📍 *Local:* ${igreja ? igreja.nome : 'Igreja'}\n`;
                 txt += `📅 *Data:* ${dataFormatada}\n`;
                 txt += `⏰ *Horário:* ${escala.horario}\n\n`;
@@ -2006,16 +2112,28 @@
                     const vols = (eq.voluntarioIds || []).map(vid => appState.voluntarios.find(v => v.id === vid)).filter(Boolean);
                     text += `• *${eq.funcao}:* ${vols.map(v => v.nome).join(', ') || 'Pendente'}\n`;
                 });
+                text += `\n(Cada servidor receberá seu link individual de confirmação via WhatsApp)\n`;
             } else {
                 const vol = appState.voluntarios.find(v => v.id === voluntarioId);
+                const eqFunc = (escala.equipe || []).find(eq => (eq.voluntarioIds || []).includes(voluntarioId));
                 text += `👤 *Servidor:* ${vol ? vol.nome : ''}\n`;
+                if (eqFunc) {
+                    text += `🏷️ *Função Litúrgica:* ${eqFunc.funcao}\n`;
+                }
+
+                const linkConfirma = `${baseUrl}?confirma=1&escala=${escala.id}&vol=${voluntarioId}&status=CONFIRMADO`;
+                const linkSubstitui = `${baseUrl}?confirma=1&escala=${escala.id}&vol=${voluntarioId}&status=SUBSTITUICAO`;
+
+                text += `\n*Por favor, confirme sua presença:*\n`;
+                text += `✅ *Confirmar Presença no Altar:*\n${linkConfirma}\n\n`;
+                text += `🔄 *Preciso de Substituição:*\n${linkSubstitui}\n`;
             }
 
             if (obsExtra && obsExtra.trim().length > 0) {
                 text += `\n📝 *Observação:* ${obsExtra.trim()}\n`;
             }
 
-            text += `\nContamos com sua presença! Deus abençoe! 🙏`;
+            text += `\nContamos com sua presença e orações! Deus abençoe! 🙏`;
             return text;
         }
 
@@ -2043,23 +2161,321 @@
             const tipoMsg = document.getElementById('lembrete-tipo-msg').value;
 
             const escala = appState.escalas.find(e => e.id === escalaId);
-            if (!escala) return alert('Selecione uma escala.');
+            if (!escala) return alert('Selecione uma celebração.');
+
+            function formatarTelefoneWA(phone) {
+                if (!phone) return '';
+                const clean = phone.replace(/\D/g, '');
+                return clean.startsWith('55') ? clean : ('55' + clean);
+            }
 
             if (voluntarioId === 'ALL') {
+                let disparosCount = 0;
                 escala.equipe.forEach(eq => {
                     (eq.voluntarioIds || []).forEach(vid => {
                         const vol = appState.voluntarios.find(v => v.id === vid);
                         if (vol && vol.phone) {
+                            const tel = formatarTelefoneWA(vol.phone);
                             const txt = generateLembreteText(escala, vol.id, obsExtra, tipoMsg);
-                            window.open(`https://wa.me/${vol.phone}?text=${encodeURIComponent(txt)}`, '_blank');
+                            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(txt)}`, '_blank');
+                            disparosCount++;
+                        }
+                    });
+                });
+                if (disparosCount === 0) alert('Nenhum voluntário da escala possui telefone cadastrado.');
+            } else {
+                const vol = appState.voluntarios.find(v => v.id === voluntarioId);
+                if (!vol || !vol.phone) return alert('Voluntário sem telefone cadastrado.');
+                const tel = formatarTelefoneWA(vol.phone);
+                const txt = generateLembreteText(escala, vol.id, obsExtra, tipoMsg);
+                window.open(`https://wa.me/${tel}?text=${encodeURIComponent(txt)}`, '_blank');
+            }
+        }
+
+        
+        // ==================== PROCESSAMENTO DE CONFIRMAÇÕES VIA LINK WHATSAPP ====================
+        async function checkUrlConfirmation() {
+            const params = new URLSearchParams(window.location.search);
+            const isConfirma = params.get('confirma') === '1' || params.get('c') === '1';
+            if (!isConfirma) return;
+
+            const escalaId = params.get('escala') || params.get('esc') || params.get('e');
+            const volId = params.get('vol') || params.get('voluntario') || params.get('v');
+            const newStatus = (params.get('status') || params.get('s') || 'CONFIRMADO').toUpperCase();
+
+            if (!escalaId || !volId) return;
+
+            let escala = appState.escalas.find(e => e.id === escalaId);
+            let vol = appState.voluntarios.find(v => v.id === volId);
+            let igreja = escala ? appState.igrejas.find(i => i.id === escala.igrejaId) : null;
+            let eqFunc = escala ? (escala.equipe || []).find(eq => (eq.voluntarioIds || []).includes(volId)) : null;
+
+            // Se ainda não estava carregado localmente, busca dados pontuais no Supabase
+            if ((!escala || !vol) && sb) {
+                try {
+                    const { data: eData } = await sb.from('escalas').select('*').eq('id', escalaId).single();
+                    if (eData) {
+                        const { data: igData } = await sb.from('igrejas').select('*').eq('id', eData.igreja_id).single();
+                        const { data: vData } = await sb.from('voluntarios').select('*').eq('id', volId).single();
+                        const { data: efData } = await sb.from('escala_funcoes').select('*').eq('escala_id', escalaId).eq('voluntario_id', volId).single();
+                        
+                        escala = escala || { id: eData.id, igrejaId: eData.igreja_id, data: eData.data, horario: eData.horario, equipe: [] };
+                        igreja = igreja || (igData ? { id: igData.id, nome: igData.nome } : null);
+                        vol = vol || (vData ? { id: vData.id, nome: vData.nome } : null);
+                        if (efData && !eqFunc) eqFunc = { funcao: efData.funcao, voluntarioIds: [volId], status: newStatus };
+                    }
+                } catch (e) {
+                    console.warn('Erro ao buscar dados remotos para confirmação:', e);
+                }
+            }
+
+            // 1. Salvar status no Supabase Nuvem
+            if (sb) {
+                try {
+                    await sb.from('escala_confirmacoes').delete().match({ escala_id: escalaId, voluntario_id: volId });
+                    await sb.from('escala_confirmacoes').insert({
+                        escala_id: escalaId,
+                        voluntario_id: volId,
+                        status: newStatus
+                    });
+                    console.log('✓ Confirmação registrada no Supabase Cloud:', escalaId, volId, newStatus);
+                } catch (err) {
+                    console.error('Erro ao salvar confirmação no Supabase:', err);
+                }
+            }
+
+            // 2. Atualizar no estado local
+            if (escala && eqFunc) {
+                eqFunc.status = newStatus;
+                localStorage.setItem('sacra_escala_v2_data', JSON.stringify(appState));
+                renderAll();
+            }
+
+            // 3. Abrir modal visual de confirmação litúrgica para o voluntário
+            abrirModalConfirmacao({
+                escala,
+                vol,
+                igreja,
+                funcao: eqFunc ? eqFunc.funcao : 'Servidor do Altar',
+                status: newStatus
+            });
+
+            // 4. Limpar os parâmetros da barra de navegação sem recarregar a página
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        function abrirModalConfirmacao({ escala, vol, igreja, funcao, status }) {
+            const modal = document.getElementById('modal-confirmacao');
+            if (!modal) return;
+
+            const dataFormatada = escala ? new Date(escala.data + 'T00:00:00').toLocaleDateString('pt-BR') : '--/--/----';
+            const horario = escala ? escala.horario : '--:--';
+            const nomeIgreja = igreja ? igreja.nome : (escala ? 'Igreja / Santuário' : 'Comunidade Paroquial');
+            const nomeServidor = vol ? vol.nome : 'Servidor do Altar';
+
+            document.getElementById('conf-info-igreja').innerText = nomeIgreja;
+            document.getElementById('conf-info-data').innerText = dataFormatada;
+            document.getElementById('conf-info-horario').innerText = horario;
+            document.getElementById('conf-info-servidor').innerText = nomeServidor;
+            document.getElementById('conf-info-funcao').innerText = funcao || 'Serviço Litúrgico';
+
+            const header = document.getElementById('conf-modal-header');
+            const iconContainer = document.getElementById('conf-modal-icon');
+            const title = document.getElementById('conf-modal-title');
+            const subtitle = document.getElementById('conf-modal-subtitle');
+            const subAction = document.getElementById('conf-substituicao-action');
+
+            if (status === 'CONFIRMADO') {
+                header.className = "p-6 text-center text-white relative bg-gradient-to-br from-emerald-800 via-navy-900 to-navy-950";
+                iconContainer.className = "w-16 h-16 mx-auto rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-3 shadow-lg";
+                iconContainer.innerHTML = '<i class="fa-solid fa-check-double text-2xl text-emerald-300"></i>';
+                title.innerText = "Presença Confirmada!";
+                subtitle.innerText = "Deus seja louvado pelo seu ministério e disponibilidade no serviço do altar.";
+                subAction.classList.add('hidden');
+            } else {
+                header.className = "p-6 text-center text-white relative bg-gradient-to-br from-amber-700 via-rose-900 to-navy-950";
+                iconContainer.className = "w-16 h-16 mx-auto rounded-full bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center mb-3 shadow-lg";
+                iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-2xl text-amber-300"></i>';
+                title.innerText = "Substituição Solicitada";
+                subtitle.innerText = "Registramos que você precisará de um substituto para esta celebração.";
+                subAction.classList.remove('hidden');
+
+                const btnTroca = document.getElementById('conf-btn-pedir-troca');
+                if (btnTroca && escala) {
+                    btnTroca.onclick = function() {
+                        const txt = `*⚠️ PEDIDO DE SUBSTITUIÇÃO ⚠️*\n\nOlá irmãos! Eu (${nomeServidor}) não poderei estar no altar na Santa Missa:\n📍 *Local:* ${nomeIgreja}\n📅 *Data:* ${dataFormatada} às ${horario}\n🏷️ *Função:* ${funcao}\n\nAlguém poderia me substituir? Deus abençoe! 🙏`;
+                        window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`, '_blank');
+                    };
+                }
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function fecharModalConfirmacao() {
+            const modal = document.getElementById('modal-confirmacao');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        
+        // ==================== INTEGRAÇÃO NATIVA WA-AKG (mrifqidaffaaditya/WA-AKG) ====================
+        function saveWaAkgSettings() {
+            if (!appState.config) appState.config = {};
+            appState.config.waAkgUrl = (document.getElementById('cfg-waakg-url').value || '').trim();
+            appState.config.waAkgSession = (document.getElementById('cfg-waakg-session').value || '').trim();
+            appState.config.waAkgApiKey = (document.getElementById('cfg-waakg-apikey').value || '').trim();
+            saveState();
+            showToast('✓ Configurações do servidor WA-AKG salvas com sucesso!');
+        }
+
+        async function testarConexaoWaAkg() {
+            const url = (document.getElementById('cfg-waakg-url').value || '').replace(/\/+$/, '');
+            const sessionId = (document.getElementById('cfg-waakg-session').value || '').trim();
+            const apiKey = (document.getElementById('cfg-waakg-apikey').value || '').trim();
+            const statusEl = document.getElementById('waakg-test-status');
+            statusEl.classList.remove('hidden');
+
+            if (!url || !apiKey) {
+                statusEl.className = 'text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-lg';
+                statusEl.innerText = 'Preencha a URL do Servidor e a Chave X-API-Key antes de testar.';
+                return;
+            }
+
+            statusEl.className = 'text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 p-2.5 rounded-lg';
+            statusEl.innerText = 'Conectando ao servidor WA-AKG (/api/sessions)...';
+
+            try {
+                const resp = await fetch(`${url}/api/sessions`, {
+                    method: 'GET',
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+
+                if (!resp.ok) {
+                    throw new Error(`Servidor respondeu com status HTTP ${resp.status}`);
+                }
+
+                const data = await resp.json();
+                console.log('Resposta do WA-AKG (/api/sessions):', data);
+
+                let sessionDetalhe = '';
+                if (Array.isArray(data)) {
+                    const sessaoEncontrada = data.find(s => s.sessionId === sessionId || s.id === sessionId || s.name === sessionId);
+                    if (sessionId) {
+                        sessionDetalhe = sessaoEncontrada 
+                            ? ` (Sessão "${sessionId}" conectada e pronta!)` 
+                            : ` (Atenção: A sessão "${sessionId}" não foi encontrada nas sessões ativas do servidor).`;
+                    } else {
+                        sessionDetalhe = ` (${data.length} sessões encontradas no servidor)`;
+                    }
+                }
+
+                statusEl.className = 'text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg';
+                statusEl.innerText = `✓ Conexão bem-sucedida com o servidor WA-AKG!${sessionDetalhe}`;
+                showToast('✓ Conexão com WA-AKG estabelecida!');
+            } catch (err) {
+                console.error('Erro ao testar WA-AKG:', err);
+                statusEl.className = 'text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-lg';
+                statusEl.innerText = `❌ Falha ao conectar: ${err.message}. Verifique se o servidor WA-AKG está ativo e se o CORS permite chamadas do navegador.`;
+            }
+        }
+
+        async function dispararWaAkgEmMassa() {
+            const config = appState.config || {};
+            const url = (config.waAkgUrl || '').replace(/\/+$/, '');
+            const sessionId = (config.waAkgSession || '').trim();
+            const apiKey = (config.waAkgApiKey || '').trim();
+
+            if (!url || !sessionId || !apiKey) {
+                alert('Configure os dados do servidor WA-AKG na aba "Configurações" (URL, Session ID e X-API-Key).');
+                switchTab('config');
+                return;
+            }
+
+            const escalaId = document.getElementById('lembrete-escala-select').value;
+            const voluntarioId = document.getElementById('lembrete-voluntario-select').value;
+            const obsExtra = document.getElementById('lembrete-obs-extra').value;
+            const tipoMsg = document.getElementById('lembrete-tipo-msg').value;
+
+            const escala = appState.escalas.find(e => e.id === escalaId);
+            if (!escala) return alert('Selecione uma celebração antes de disparar.');
+
+            let destinatarios = [];
+            if (voluntarioId === 'ALL') {
+                escala.equipe.forEach(eq => {
+                    (eq.voluntarioIds || []).forEach(vid => {
+                        const vol = appState.voluntarios.find(v => v.id === vid);
+                        if (vol && vol.phone && !destinatarios.some(d => d.vol.id === vol.id)) {
+                            destinatarios.push({ vol, funcao: eq.funcao });
                         }
                     });
                 });
             } else {
                 const vol = appState.voluntarios.find(v => v.id === voluntarioId);
-                if (!vol || !vol.phone) return alert('Voluntário sem telefone cadastrado.');
-                const txt = generateLembreteText(escala, vol.id, obsExtra, tipoMsg);
-                window.open(`https://wa.me/${vol.phone}?text=${encodeURIComponent(txt)}`, '_blank');
+                if (!vol || !vol.phone) return alert('O voluntário selecionado não possui telefone cadastrado.');
+                const eqFunc = (escala.equipe || []).find(eq => (eq.voluntarioIds || []).includes(vol.id));
+                destinatarios.push({ vol, funcao: eqFunc ? eqFunc.funcao : 'Servidor' });
+            }
+
+            if (destinatarios.length === 0) {
+                return alert('Nenhum voluntário da celebração possui telefone cadastrado para disparo.');
+            }
+
+            if (!confirm(`Deseja iniciar o disparo automático via WA-AKG para ${destinatarios.length} voluntário(s)?`)) {
+                return;
+            }
+
+            showToast(`Iniciando disparo em massa para ${destinatarios.length} servidores...`, 'info');
+
+            let sucessos = 0;
+            let falhas = 0;
+
+            for (let i = 0; i < destinatarios.length; i++) {
+                const item = destinatarios[i];
+                const cleanPhone = item.vol.phone.replace(/\D/g, '');
+                const fullPhone = cleanPhone.startsWith('55') ? cleanPhone : ('55' + cleanPhone);
+                const jid = `${fullPhone}@s.whatsapp.net`;
+                const msgText = generateLembreteText(escala, item.vol.id, obsExtra, tipoMsg);
+
+                try {
+                    showToast(`[${i + 1}/${destinatarios.length}] Enviando para ${item.vol.nome}...`, 'info');
+
+                    const resp = await fetch(`${url}/api/messages/${sessionId}/${jid}/send`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-API-Key': apiKey
+                        },
+                        body: JSON.stringify({
+                            message: {
+                                text: msgText
+                            }
+                        })
+                    });
+
+                    if (resp.ok) {
+                        sucessos++;
+                    } else {
+                        const errBody = await resp.json().catch(() => ({}));
+                        console.error(`Falha WA-AKG para ${item.vol.nome}:`, errBody);
+                        falhas++;
+                    }
+                } catch (e) {
+                    console.error(`Erro de rede WA-AKG para ${item.vol.nome}:`, e);
+                    falhas++;
+                }
+
+                // Pausa de 1.5s entre mensagens para segurança de envio
+                if (i < destinatarios.length - 1) {
+                    await new Promise(res => setTimeout(res, 1500));
+                }
+            }
+
+            if (falhas === 0) {
+                showToast(`✓ Sucesso! ${sucessos} mensagem(ns) enviada(s) via WA-AKG!`, 'success');
+            } else {
+                showToast(`Disparo finalizado: ${sucessos} enviado(s) e ${falhas} falha(s). Verifique o console.`, 'warning');
             }
         }
 
@@ -2476,8 +2892,11 @@
                     FUNCOES_LITURGICAS.map(f => `<option value="${f}">${f}</option>`).join('');
             }
 
-            document.getElementById('cfg-webhook-url').value = appState.config.webhookUrl || '';
-            document.getElementById('cfg-webhook-token').value = appState.config.webhookToken || '';
+            if (document.getElementById('cfg-waakg-url')) {
+                document.getElementById('cfg-waakg-url').value = (appState.config && appState.config.waAkgUrl) || '';
+                document.getElementById('cfg-waakg-session').value = (appState.config && appState.config.waAkgSession) || '';
+                document.getElementById('cfg-waakg-apikey').value = (appState.config && appState.config.waAkgApiKey) || '';
+            }
         }
 
         function saveApiSettings() {
